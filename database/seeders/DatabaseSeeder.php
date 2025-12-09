@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             GroundSeeder::class,
             PriceListSeeder::class,
             ServiceListSeeder::class,
+            TermSeeder::class,
             EventSeeder::class,
             BookingSeeder::class,
             PaymentSeeder::class,

@@ -45,6 +45,7 @@ class RatingSeeder extends Seeder
                         'venue_id' => $venue->id,
                     ],
                     [
+                        'id' => Str::uuid()->toString(),
                         'star_number' => rand(3, 5),
                         'review' => $reviews[array_rand($reviews)],
                     ]

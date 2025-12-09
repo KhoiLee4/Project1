@@ -115,9 +115,9 @@ class VenueSeeder extends Seeder
                 ])
             );
 
-            // Attach categories
-            $categoryIds = Category::whereIn('name', $categoriesToAttach)->pluck('id');
-            $venue->categories()->sync($categoryIds);
+            // Categories will be attached with prices in PriceListSeeder
+            // $categoryIds = Category::whereIn('name', $categoriesToAttach)->pluck('id');
+            // $venue->categories()->sync($categoryIds);
 
             // Attach images
             $imagesToAttach = [];

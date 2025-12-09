@@ -13,7 +13,14 @@ class RatingsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
+            ->reorderable(false)
             ->columns([
+                TextColumn::make('user_id')
+                    ->label('User ID')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.name')
                     ->label('User')
                     ->searchable()

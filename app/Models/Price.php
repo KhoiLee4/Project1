@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PriceListDetail extends Model
+class Price extends Model
 {
     use HasFactory, HasUuids;
+
+    protected $table = 'prices';
 
     protected $fillable = [
         'id',
@@ -16,10 +18,8 @@ class PriceListDetail extends Model
         'day',
         'start_time',
         'end_time',
-        'price',
         'fixed_price',
         'current_price',
-        'price_list_id',
     ];
 
     protected function casts(): array
@@ -27,14 +27,25 @@ class PriceListDetail extends Model
         return [
             'id' => 'string',
             'date' => 'date',
-            'price' => 'decimal:2',
+            'start_time' => 'datetime',
+            'end_time' => 'datetime',
             'fixed_price' => 'decimal:2',
             'current_price' => 'decimal:2',
         ];
     }
 
-    public function priceList()
+    public function venues()
     {
-        return $this->belongsTo(PriceList::class, 'price_list_id');
+        return $this->belongsToMany(Venue::class, 'venues_categories', 'price_id', 'venue_id')
+                    ->withPivot('category_id')
+                    ->withTimestamps();
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'venues_categories', 'price_id', 'category_id')
+                    ->withPivot('venue_id')
+                    ->withTimestamps();
     }
 }
+

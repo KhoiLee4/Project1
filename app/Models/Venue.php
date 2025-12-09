@@ -51,9 +51,11 @@ class Venue extends Model
                     ->withTimestamps();
     }
 
-    public function priceLists()
+    public function prices()
     {
-        return $this->hasMany(PriceList::class, 'venue_id');
+        return $this->belongsToMany(Price::class, 'venues_categories', 'venue_id', 'price_id')
+                    ->withPivot('category_id')
+                    ->withTimestamps();
     }
 
     public function serviceLists()

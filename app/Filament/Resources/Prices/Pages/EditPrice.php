@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\PriceLists\Pages;
+namespace App\Filament\Resources\Prices\Pages;
 
-use App\Filament\Resources\PriceLists\PriceListResource;
+use App\Filament\Resources\Prices\PriceResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditPriceList extends EditRecord
+class EditPrice extends EditRecord
 {
-    protected static string $resource = PriceListResource::class;
+    protected static string $resource = PriceResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -17,3 +17,4 @@ class EditPriceList extends EditRecord
         ];
     }
 }
+

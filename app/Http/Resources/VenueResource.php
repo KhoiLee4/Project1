@@ -37,7 +37,7 @@ class VenueResource extends JsonResource
                 'is_image' => $image->pivot->is_image ?? true,
             ]),
             'grounds' => GroundResource::collection($this->whenLoaded('grounds')),
-            'price_lists' => PriceListResource::collection($this->whenLoaded('priceLists')),
+            'prices' => PriceResource::collection($this->whenLoaded('prices')),
             'service_lists' => ServiceListResource::collection($this->whenLoaded('serviceLists')),
             'ratings' => RatingResource::collection($this->whenLoaded('ratings')),
             'average_rating' => $this->ratings->avg('star_number') ?? 0,

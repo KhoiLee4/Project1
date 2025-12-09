@@ -35,14 +35,8 @@ class ImageForm
                     ->helperText('Upload image file (max 10MB)')
                     ->getUploadedFileUsing(function ($file) {
                         return Storage::disk('public')->url($file);
-                    }),
-            ])
-            ->mutateFormDataUsing(function (array $data): array {
-                // Convert array to string URL if needed
-                if (isset($data['image_url']) && is_array($data['image_url'])) {
-                    $data['image_url'] = Storage::disk('public')->url($data['image_url'][0] ?? $data['image_url']);
-                }
-                return $data;
-            });
+                    })
+                    ->dehydrated(true),
+            ]);
     }
 }

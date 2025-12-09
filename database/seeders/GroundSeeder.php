@@ -12,17 +12,32 @@ class GroundSeeder extends Seeder
 {
     public function run(): void
     {
-        $venues = Venue::with('categories')->get();
+        $venues = Venue::all();
+        $categories = Category::all();
 
-        if ($venues->isEmpty()) {
-            $this->command->warn('Please run VenueSeeder first!');
+        if ($venues->isEmpty() || $categories->isEmpty()) {
+            $this->command->warn('Please run VenueSeeder and CategorySeeder first!');
             return;
         }
 
+        $venueCategories = [
+            'Football Center Hoang Mai' => ['Football'],
+            'Badminton Club Cau Giay' => ['Badminton'],
+            'Multi-Sport Complex' => ['Football', 'Basketball', 'Tennis'],
+            'Tennis Academy' => ['Tennis', 'Table Tennis'],
+            'Volleyball Arena' => ['Volleyball'],
+        ];
+
         foreach ($venues as $venue) {
-            $categories = $venue->categories;
+            $venueCategoryNames = $venueCategories[$venue->name] ?? [];
             
-            if ($categories->isEmpty()) {
+            if (empty($venueCategoryNames)) {
+                continue;
+            }
+
+            $venueCategoriesList = Category::whereIn('name', $venueCategoryNames)->get();
+            
+            if ($venueCategoriesList->isEmpty()) {
                 continue;
             }
 
@@ -30,7 +45,7 @@ class GroundSeeder extends Seeder
             $groundCount = rand(2, 4);
             
             for ($i = 1; $i <= $groundCount; $i++) {
-                $category = $categories->random();
+                $category = $venueCategoriesList->random();
                 
                 Ground::firstOrCreate(
                     [

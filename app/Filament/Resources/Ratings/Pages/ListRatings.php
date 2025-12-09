@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Ratings\Pages;
 use App\Filament\Resources\Ratings\RatingResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListRatings extends ListRecords
 {
@@ -15,5 +16,10 @@ class ListRatings extends ListRecords
         return [
             CreateAction::make(),
         ];
+    }
+
+    protected function getTableQuery(): Builder
+    {
+        return parent::getTableQuery()->orderBy('created_at', 'desc');
     }
 }

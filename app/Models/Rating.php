@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Rating extends Model
 {
-    use HasFactory;
-
-    protected $primaryKey = null;
-    public $incrementing = false;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
+        'id',
         'user_id',
         'venue_id',
         'star_number',
@@ -22,6 +21,7 @@ class Rating extends Model
     protected function casts(): array
     {
         return [
+            'id' => 'string',
             'user_id' => 'string',
             'venue_id' => 'string',
             'star_number' => 'integer',

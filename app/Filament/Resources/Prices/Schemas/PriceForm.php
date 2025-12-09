@@ -1,25 +1,18 @@
 <?php
 
-namespace App\Filament\Resources\PriceListDetails\Schemas;
+namespace App\Filament\Resources\Prices\Schemas;
 
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Schema;
 
-class PriceListDetailForm
+class PriceForm
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Select::make('price_list_id')
-                    ->label('Price List')
-                    ->relationship('priceList', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
                 DatePicker::make('date')
                     ->label('Apply Date')
                     ->displayFormat('d/m/Y')
@@ -36,11 +29,6 @@ class PriceListDetailForm
                     ->label('End Time')
                     ->required()
                     ->seconds(false),
-                TextInput::make('price')
-                    ->label('Price (if single price)')
-                    ->numeric()
-                    ->prefix('$')
-                    ->step(0.01),
                 TextInput::make('fixed_price')
                     ->label('Fixed Price')
                     ->numeric()
@@ -57,3 +45,4 @@ class PriceListDetailForm
             ]);
     }
 }
+

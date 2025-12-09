@@ -25,6 +25,14 @@ class Category extends Model
     public function venues()
     {
         return $this->belongsToMany(Venue::class, 'venues_categories', 'category_id', 'venue_id')
+                    ->withPivot('price_id')
+                    ->withTimestamps();
+    }
+
+    public function prices()
+    {
+        return $this->belongsToMany(Price::class, 'venues_categories', 'category_id', 'price_id')
+                    ->withPivot('venue_id')
                     ->withTimestamps();
     }
 

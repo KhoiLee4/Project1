@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('venues_categories', function (Blueprint $table) {
             $table->uuid('venue_id');
             $table->uuid('category_id');
+            $table->uuid('price_id');
             $table->timestamps();
             
             $table->primary(['venue_id', 'category_id']);
             $table->foreign('venue_id')->references('id')->on('venues')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->foreign('price_id')->references('id')->on('prices')->onDelete('cascade');
         });
     }
 
