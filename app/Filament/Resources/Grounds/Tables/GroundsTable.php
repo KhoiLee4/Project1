@@ -20,7 +20,6 @@ class GroundsTable
                     ->sortable(),
                 TextColumn::make('venue.name')
                     ->label('Venue')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('category.name')
                     ->label('Category')

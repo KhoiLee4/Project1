@@ -18,7 +18,7 @@ class GroundResource extends Resource
 {
     protected static ?string $model = Ground::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::MapPin;
 
     protected static ?string $recordTitleAttribute = 'name';
 

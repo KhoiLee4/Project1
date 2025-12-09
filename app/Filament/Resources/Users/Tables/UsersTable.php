@@ -9,6 +9,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\BadgeColumn;
 
 class UsersTable
 {
@@ -27,9 +28,27 @@ class UsersTable
                 TextColumn::make('phone_number')
                     ->label('Phone Number')
                     ->searchable(),
-                IconColumn::make('is_admin')
-                    ->label('Admin')
-                    ->boolean(),
+                BadgeColumn::make('role_display')
+                    ->label('Role')
+                    ->getStateUsing(function ($record) {
+                        if ($record->is_admin == 1) {
+                            return 'Admin';
+                        }                   
+                        if ($record->role == 1) {
+                            return 'User';
+                        }
+                        return 'Owner';
+                    })
+                    ->colors([
+                        'primary' => 'User',
+                        'danger' => 'Admin',
+                        'warning' => 'Owner',
+                    ])
+                    ->icons([
+                        'heroicon-o-user' => 'User',
+                        'heroicon-o-shield-check' => 'Admin',
+                        'heroicon-o-home' => 'Owner',
+                    ]),
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),

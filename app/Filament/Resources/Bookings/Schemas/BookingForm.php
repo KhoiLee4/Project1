@@ -8,22 +8,96 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Hidden;  
 use Filament\Schemas\Schema;
 
 class BookingForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $isEdit = $schema->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
         return $schema
             ->components([
                 Select::make('user_id')
                     ->label('User')
                     ->relationship('user', 'name')
-                    ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->disabled($isEdit)
+                    ->dehydrated(!$isEdit)
+                    ->helperText(fn ($context) =>
+                        $context === 'create'
+                            ? 'Không có user? ➕ Nhấn "Create New User" để tạo nhanh.'
+                            : null
+                    )
+                    ->createOptionForm([
+                    TextInput::make('phone_number')
+                        ->label('Phone Number')
+                        ->tel()
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(20),
+                    TextInput::make('email')
+                        ->label('Email')
+                        ->email()
+                        ->required()
+                        ->unique(ignoreRecord: true)
+                        ->maxLength(100),
+                    TextInput::make('name')
+                        ->label('Full Name')
+                        ->required()
+                        ->maxLength(100),
+                    TextInput::make('password')
+                        ->label('Password')
+                        ->password()
+                        ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser)
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->minLength(8),
+                    Select::make('gender')
+                        ->label('Gender')
+                        ->options([
+                            0 => 'Male',
+                            1 => 'Female',
+                        ])
+                        ->required()
+                        ->default(1)
+                        ->dehydrateStateUsing(fn($state) => is_null($state) ? null : (int) $state)
+                        ->reactive(),
+                    DatePicker::make('birthday')
+                        ->label('Birthday')
+                        ->default(now())
+                        ->required()
+                        ->displayFormat('d/m/Y')
+                        ->maxDate(now())               // không cho chọn ngày tương lai
+                        ->rule('before_or_equal:today'), 
+                    Select::make('role_type')
+                        ->label('Role')
+                        ->options([
+                            'user' => 'User',
+                        ])
+                        ->default('user')
+                        ->disabled() 
+                        ->required(),
+                    Hidden::make('role')->default(1),
+                    Hidden::make('is_admin')->default(0),
+                    Toggle::make('is_active')
+                        ->label('Is Active')
+                        ->default(true)
+                        ->required(),
+                    Select::make('avatar_id')
+                        ->label('Avatar')
+                        ->relationship('avatar', 'name')
+                        ->preload(),
+                    Select::make('cover_image_id')
+                        ->label('Cover Image')
+                        ->relationship('coverImage', 'name')
+                        ->preload(),
+                    ])  
+                    ->createOptionUsing(function (array $data) {
+                        return \App\Models\User::create($data)->id;
+                    }),
                 DatePicker::make('date')
-                    ->label('Booking Date')
+                    ->label('Date')
                     ->required()
                     ->displayFormat('d/m/Y'),
                 TimePicker::make('start_time')
@@ -46,7 +120,6 @@ class BookingForm
                 Select::make('ground_id')
                     ->label('Ground')
                     ->relationship('ground', 'name')
-                    ->searchable()
                     ->preload()
                     ->required(),
                 TextInput::make('target')
@@ -79,7 +152,6 @@ class BookingForm
                 Select::make('event_id')
                     ->label('Event')
                     ->relationship('event', 'name')
-                    ->searchable()
                     ->preload()
                     ->visible(fn ($get) => $get('is_event')),
             ]);

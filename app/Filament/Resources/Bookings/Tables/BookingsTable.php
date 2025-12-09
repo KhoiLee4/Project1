@@ -33,7 +33,6 @@ class BookingsTable
                     ->sortable(),
                 TextColumn::make('ground.name')
                     ->label('Ground')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -45,7 +44,6 @@ class BookingsTable
                         'Completed' => 'info',
                         default => 'gray',
                     })
-                    ->searchable()
                     ->sortable(),
                 IconColumn::make('is_event')
                     ->label('Event')
