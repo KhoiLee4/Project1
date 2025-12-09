@@ -16,4 +16,10 @@ class ListVenues extends ListRecords
             CreateAction::make(),
         ];
     }
+    protected function getTableRecordUrl($record): ?string
+    {
+        return route('filament.admin.resources.grounds.index', [
+            'venue_id' => $record->id,
+        ]);
+    }
 }

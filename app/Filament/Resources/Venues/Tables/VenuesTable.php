@@ -13,6 +13,9 @@ class VenuesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => route('filament.admin.resources.grounds.index', [
+                'venue_id' => $record->id
+            ]))
             ->columns([
                 TextColumn::make('name')
                     ->label('Venue Name')
