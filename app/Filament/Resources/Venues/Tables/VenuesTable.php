@@ -23,14 +23,11 @@ class VenuesTable
                     ->sortable(),
                 TextColumn::make('address')
                     ->label('Address')
-                    ->searchable()
                     ->formatStateUsing(fn ($record) => $record->sub_address . ', ' . $record->district . ', ' . $record->city),
                 TextColumn::make('phone_number1')
-                    ->label('Phone Number')
-                    ->searchable(),
+                    ->label('Phone Number'),
                 TextColumn::make('operating_time')
                     ->label('Operating Time')
-                    ->searchable()
                     ->toggleable(),
                 TextColumn::make('owner.name')
                     ->label('Owner')

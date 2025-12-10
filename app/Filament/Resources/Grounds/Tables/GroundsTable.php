@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
 
 class GroundsTable
 {
@@ -35,7 +36,17 @@ class GroundsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('venue_id')
+                    ->label('Venue')
+                    ->options(\App\Models\Venue::pluck('name', 'id'))
+                    ->default(fn () => request('venue_id'))
+                    ->query(function ($query, array $data) {
+                        if (! $data['value']) {
+                            return $query;
+                        }
+
+                        return $query->where('venue_id', $data['value']);
+                    }),
             ])
             ->recordActions([
                 EditAction::make(),
