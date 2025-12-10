@@ -7,7 +7,6 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
 class PaymentsTable
 {
     public static function configure(Table $table): Table
@@ -29,7 +28,6 @@ class PaymentsTable
                 TextColumn::make('method')
                     ->label('Payment Method')
                     ->badge()
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -41,7 +39,6 @@ class PaymentsTable
                         'Refunded' => 'info',
                         default => 'gray',
                     })
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('unit_price')
                     ->label('Unit Price')

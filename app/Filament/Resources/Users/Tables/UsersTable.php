@@ -10,7 +10,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\BadgeColumn;
-
+use Filament\Tables\Filters\SelectFilter;
 class UsersTable
 {
     public static function configure(Table $table): Table
@@ -23,11 +23,9 @@ class UsersTable
                     ->sortable(),
                 TextColumn::make('email')
                     ->label('Email')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('phone_number')
-                    ->label('Phone Number')
-                    ->searchable(),
+                    ->label('Phone Number'),
                 BadgeColumn::make('role_display')
                     ->label('Role')
                     ->getStateUsing(function ($record) {
@@ -67,7 +65,26 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('user_type')
+                    ->label('Loại người dùng')
+                    ->options([
+                        'admin'    => 'Admin',
+                        'owner'    => 'Owner',
+                        'customer' => 'Customer',
+                    ])
+                    ->query(function ($query, array $data) {
+                        $value = $data['value'] ?? null;
+
+                        if (! $value) {
+                            return $query;
+                        }
+
+                        return match ($value) {
+                            'admin'    => $query->where('is_admin', 1),
+                            'customer' => $query->where('is_admin', 0)->where('role', 1),
+                            'owner'    => $query->where('is_admin', 0)->where('role', 0),
+                        };
+                    }),
             ])
             ->recordActions([
                 EditAction::make(),

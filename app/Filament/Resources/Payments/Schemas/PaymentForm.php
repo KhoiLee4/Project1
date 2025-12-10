@@ -16,8 +16,10 @@ class PaymentForm
                 Select::make('booking_id')
                     ->label('Booking')
                     ->relationship('booking', 'id')
-                    ->searchable()
                     ->preload()
+                    ->default(fn () => request()->get('booking_id'))
+                    ->disabled()       // luôn disabled
+                    ->dehydrated(true) // vẫn lưu vào DB
                     ->required(),
                 TextInput::make('amount')
                     ->label('Total Amount')

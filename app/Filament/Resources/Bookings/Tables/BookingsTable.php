@@ -8,7 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
+use Filament\Actions\Action;
 class BookingsTable
 {
     public static function configure(Table $table): Table
@@ -68,6 +68,12 @@ class BookingsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('createPayment')
+                    ->label('Thanh toán')
+                    ->icon('heroicon-o-credit-card')
+                    ->url(fn ($record) => route('filament.admin.resources.payments.create', [
+                        'booking_id' => $record->id,
+                    ])),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
