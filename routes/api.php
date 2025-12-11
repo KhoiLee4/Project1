@@ -27,6 +27,10 @@ Route::prefix('auth')->group(function () {
 Route::prefix('venues')->group(function () {
     Route::get('/', [VenueController::class, 'index']);
     Route::get('/{id}', [VenueController::class, 'show']);
+    Route::get('/{venueId}/services', [VenueController::class, 'services']);
+    Route::get('/{venueId}/terms', [VenueController::class, 'terms']);
+    Route::get('/{venueId}/price-lists', [VenueController::class, 'priceLists']);
+    Route::get('/{venueId}/images', [VenueController::class, 'images']);
 });
 
 Route::prefix('categories')->group(function () {

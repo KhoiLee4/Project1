@@ -11,7 +11,7 @@ class RatingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Rating::with(['user', 'venue']);
+        $query = Rating::with(['user.avatar', 'venue']);
 
         if ($request->has('venue_id')) {
             $query->where('venue_id', $request->venue_id);
@@ -37,15 +37,26 @@ class RatingController extends Controller
 
         $validated['user_id'] = $request->user()->id;
 
+        $existingRating = Rating::where('user_id', $validated['user_id'])
+            ->where('venue_id', $validated['venue_id'])
+            ->first();
+
+        if ($existingRating) {
+            return response()->json([
+                'message' => 'You have already rated this venue. Please update your existing rating instead.',
+                'rating_id' => $existingRating->id
+            ], 422);
+        }
+
         $rating = Rating::create($validated);
-        $rating->load(['user', 'venue']);
+        $rating->load(['user.avatar', 'venue']);
 
         return new RatingResource($rating);
     }
 
     public function show(string $id)
     {
-        $rating = Rating::with(['user', 'venue'])->findOrFail($id);
+        $rating = Rating::with(['user.avatar', 'venue'])->findOrFail($id);
         return new RatingResource($rating);
     }
 
@@ -63,7 +74,7 @@ class RatingController extends Controller
         ]);
 
         $rating->update($validated);
-        $rating->load(['user', 'venue']);
+        $rating->load(['user.avatar', 'venue']);
 
         return new RatingResource($rating);
     }

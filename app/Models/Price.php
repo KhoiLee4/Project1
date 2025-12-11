@@ -27,8 +27,8 @@ class Price extends Model
         return [
             'id' => 'string',
             'date' => 'date',
-            'start_time' => 'datetime',
-            'end_time' => 'datetime',
+            'start_time' => 'string',
+            'end_time' => 'string',
             'fixed_price' => 'decimal:2',
             'current_price' => 'decimal:2',
         ];
