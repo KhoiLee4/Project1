@@ -15,10 +15,10 @@ class ListVenues extends ListRecords
         return [
             CreateAction::make(),
 
-        \Filament\Actions\Action::make('notice')
-            ->label('⚠️ Lưu ý: Tạo Owner trước khi tạo Venue')
-            ->disabled()
-            ->color('warning'),
+        // \Filament\Actions\Action::make('notice')
+        //     ->label('⚠️ Lưu ý: Tạo Owner trước khi tạo Venue')
+        //     ->disabled()
+        //     ->color('warning'),
         ];
     }
     protected function getTableRecordUrl($record): ?string

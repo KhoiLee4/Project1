@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Venues\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Actions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -56,6 +58,11 @@ class VenuesTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('viewCalendar')
+                    ->label('Xem Lịch Đặt Sân')
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('info')
+                    ->url(fn ($record) => route('filament.admin.pages.venue-booking-calendar', ['venue' => $record->id])),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
