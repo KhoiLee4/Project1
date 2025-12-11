@@ -7,7 +7,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
+use Filament\Tables\Filters\SelectFilter;
+use App\Models\Category;
 class RatingsTable
 {
     public static function configure(Table $table): Table
@@ -54,10 +55,31 @@ class RatingsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                    SelectFilter::make('category')
+                        ->label('Category')
+                        ->options(Category::pluck('name', 'id'))
+                        ->query(function ($query, $data) {
+                            if (isset($data['value'])) {
+                                $query->whereHas('venue.categories', function ($q) use ($data) {
+                                    $q->where('categories.id', $data['value']);
+                                });
+                            }
+                        })
+                        ->searchable()
+                        ->preload(),
+                    
+                    SelectFilter::make('star_number')
+                        ->label('Star Rating')
+                        ->options([
+                            5 => '5 Stars',
+                            4 => '4 Stars',
+                            3 => '3 Stars',
+                            2 => '2 Stars',
+                            1 => '1 Star',
+                        ]),
             ])
             ->recordActions([
-                EditAction::make(),
+                // EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
