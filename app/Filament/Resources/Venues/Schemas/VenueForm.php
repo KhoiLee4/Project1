@@ -13,6 +13,7 @@ class VenueForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $isEdit = $schema->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
         return $schema
             ->components([
                 TextInput::make('name')
@@ -62,10 +63,14 @@ class VenueForm
                     ->step(0.01),
                 Select::make('owner_id')
                     ->label('Owner')
-                    ->relationship('owner', 'name')
+                    ->relationship('owner', 'name', fn ($query) =>
+                        $query->where('is_admin', 0)->where('role', 0)
+                    )
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->disabled($isEdit)
+                    ->dehydrated(!$isEdit),
                 Select::make('categories')
                     ->label('Categories')
                     ->relationship('categories', 'name')

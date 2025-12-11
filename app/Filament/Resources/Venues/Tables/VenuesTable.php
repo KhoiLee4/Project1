@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Venues\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Actions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -13,6 +15,9 @@ class VenuesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => route('filament.admin.resources.grounds.index', [
+                'venue_id' => $record->id
+            ]))
             ->columns([
                 TextColumn::make('name')
                     ->label('Venue Name')
@@ -20,14 +25,11 @@ class VenuesTable
                     ->sortable(),
                 TextColumn::make('address')
                     ->label('Address')
-                    ->searchable()
                     ->formatStateUsing(fn ($record) => $record->sub_address . ', ' . $record->district . ', ' . $record->city),
                 TextColumn::make('phone_number1')
-                    ->label('Phone Number')
-                    ->searchable(),
+                    ->label('Phone Number'),
                 TextColumn::make('operating_time')
                     ->label('Operating Time')
-                    ->searchable()
                     ->toggleable(),
                 TextColumn::make('owner.name')
                     ->label('Owner')
@@ -56,6 +58,11 @@ class VenuesTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('viewCalendar')
+                    ->label('Xem Lịch Đặt Sân')
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('info')
+                    ->url(fn ($record) => route('filament.admin.pages.venue-booking-calendar', ['venue' => $record->id])),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

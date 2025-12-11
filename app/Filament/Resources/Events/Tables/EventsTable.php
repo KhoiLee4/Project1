@@ -28,7 +28,6 @@ class EventsTable
                     ->sortable(),
                 TextColumn::make('level')
                     ->label('Level')
-                    ->searchable()
                     ->toggleable(),
                 TextColumn::make('created_at')
                     ->dateTime()

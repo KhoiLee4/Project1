@@ -18,7 +18,7 @@ class ServiceListResource extends Resource
 {
     protected static ?string $model = ServiceList::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Bars3BottomLeft;
 
     public static function form(Schema $schema): Schema
     {

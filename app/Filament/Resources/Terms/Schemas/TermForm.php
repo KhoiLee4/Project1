@@ -28,6 +28,7 @@ class TermForm
                     ->label('Update Time')
                     ->default(now())
                     ->required()
+                    ->disabled()
                     ->displayFormat('d/m/Y H:i'),
                 Textarea::make('content')
                     ->label('Term Content')

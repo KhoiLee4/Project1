@@ -8,7 +8,8 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
+use Filament\Actions\Action;
+use Filament\Tables\Filters\SelectFilter;
 class BookingsTable
 {
     public static function configure(Table $table): Table
@@ -33,7 +34,6 @@ class BookingsTable
                     ->sortable(),
                 TextColumn::make('ground.name')
                     ->label('Ground')
-                    ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -45,7 +45,6 @@ class BookingsTable
                         'Completed' => 'info',
                         default => 'gray',
                     })
-                    ->searchable()
                     ->sortable(),
                 IconColumn::make('is_event')
                     ->label('Event')
@@ -66,9 +65,38 @@ class BookingsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('user_type')
+                    ->label('Trạng thái')
+                    ->options([
+                        'pending'    => 'Pending',
+                        'confirmed'    => 'Confirmed',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->query(function ($query, array $data) {
+                        $value = $data['value'] ?? null;
+
+                        if (! $value) {
+                            return $query;
+                        }
+
+                        return match ($value) {
+                            'pending'   => $query->where('status', 'pending'),
+                            'confirmed' => $query->where('status', 'confirmed'),
+                            'completed' => $query->where('status', 'completed'),
+                            'cancelled' => $query->where('status', 'cancelled'),
+                        };
+                    }),
             ])
             ->recordActions([
+                Action::make('createPayment')
+                    ->label('Pay')
+                    ->icon('heroicon-o-credit-card')
+                    ->url(fn ($record) => route('filament.admin.resources.payments.create', [
+                        'booking_id' => $record->id,
+                    ]))
+                    ->visible(fn ($record) => in_array($record->status, ['Pending', 'Confirm']))
+                    ->color('warning'),
                 EditAction::make(),
             ])
             ->toolbarActions([

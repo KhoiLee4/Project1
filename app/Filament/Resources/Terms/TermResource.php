@@ -18,7 +18,7 @@ class TermResource extends Resource
 {
     protected static ?string $model = Term::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     public static function form(Schema $schema): Schema
     {
