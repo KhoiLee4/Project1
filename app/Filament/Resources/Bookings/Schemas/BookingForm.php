@@ -16,15 +16,25 @@ class BookingForm
     public static function configure(Schema $schema): Schema
     {
         $isEdit = $schema->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
+        $currentUserId = $isEdit ? $schema->getLivewire()->record->user_id : null;
+        
         return $schema
             ->components([
                 Select::make('user_id')
                     ->label('User')
-                    ->relationship('user', 'name')
+                    ->relationship('user', 'name', modifyQueryUsing: function ($query) use ($currentUserId) {
+                        $query->where(function($q) use ($currentUserId) {
+                            $q->where('is_admin', 0)->where('role', 1);
+                            if ($currentUserId) {
+                                $q->orWhere('id', $currentUserId);
+                            }
+                        });
+                        return $query;
+                    })
                     ->preload()
                     ->required()
                     ->disabled($isEdit)
-                    ->dehydrated(!$isEdit)
+                    ->dehydrated(true)
                     ->helperText(fn ($context) =>
                         $context === 'create'
                             ? 'Không có user? ➕ Nhấn "Create New User" để tạo nhanh.'
@@ -62,7 +72,7 @@ class BookingForm
                         ->required()
                         ->default(1)
                         ->dehydrateStateUsing(fn($state) => is_null($state) ? null : (int) $state)
-                        ->reactive(),
+                        ->live(),
                     DatePicker::make('birthday')
                         ->label('Birthday')
                         ->default(now())

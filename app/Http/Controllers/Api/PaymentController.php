@@ -42,9 +42,19 @@ class PaymentController extends Controller
             'status' => 'sometimes|in:Pending,Paid,Cancelled,Refunded',
         ]);
 
+        $booking = \App\Models\Booking::findOrFail($validated['booking_id']);
+
+        if ($booking->user_id !== $request->user()->id && !$request->user()->is_admin) {
+            return response()->json([
+                'message' => 'You can only create payments for your own bookings.'
+            ], 403);
+        }
+
         $validated['status'] = $validated['status'] ?? 'Pending';
 
         $payment = Payment::create($validated);
+        $payment->load('booking.user');
+        
         return new PaymentResource($payment);
     }
 
@@ -77,5 +87,17 @@ class PaymentController extends Controller
 
         $payment->update($validated);
         return new PaymentResource($payment);
+    }
+
+    public function myPayments(Request $request)
+    {
+        $payments = Payment::with('booking.ground.venue')
+            ->whereHas('booking', function($q) use ($request) {
+                $q->where('user_id', $request->user()->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+        
+        return PaymentResource::collection($payments);
     }
 }

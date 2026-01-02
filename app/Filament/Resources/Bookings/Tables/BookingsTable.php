@@ -92,9 +92,7 @@ class BookingsTable
                 Action::make('createPayment')
                     ->label('Pay')
                     ->icon('heroicon-o-credit-card')
-                    ->url(fn ($record) => route('filament.admin.resources.payments.create', [
-                        'booking_id' => $record->id,
-                    ]))
+                    ->url(fn ($record) => \App\Filament\Resources\Payments\PaymentResource::getUrl('create') . '?booking_id=' . $record->id)
                     ->visible(fn ($record) => in_array($record->status, ['Pending', 'Confirm']))
                     ->color('warning'),
                 EditAction::make(),

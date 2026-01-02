@@ -59,6 +59,32 @@ class BookingController extends Controller
         $validated['status'] = 'Pending';
         $validated['quantity'] = $validated['quantity'] ?? 30;
 
+        $conflictingBooking = Booking::where('ground_id', $validated['ground_id'])
+            ->where('date', $validated['date'])
+            ->where('status', '!=', 'Cancelled')
+            ->where(function($query) use ($startTime, $endTime) {
+                $query->where(function($q) use ($startTime, $endTime) {
+                    $q->whereBetween('start_time', [$startTime->toTimeString(), $endTime->toTimeString()])
+                      ->orWhereBetween('end_time', [$startTime->toTimeString(), $endTime->toTimeString()])
+                      ->orWhere(function($q2) use ($startTime, $endTime) {
+                          $q2->where('start_time', '<=', $startTime->toTimeString())
+                             ->where('end_time', '>=', $endTime->toTimeString());
+                      });
+                });
+            })
+            ->first();
+
+        if ($conflictingBooking) {
+            return response()->json([
+                'message' => 'This time slot is already booked. Please choose another time.',
+                'conflicting_booking' => [
+                    'id' => $conflictingBooking->id,
+                    'start_time' => $conflictingBooking->start_time,
+                    'end_time' => $conflictingBooking->end_time,
+                ]
+            ], 422);
+        }
+
         $booking = Booking::create($validated);
         $booking->load(['user', 'ground.venue', 'ground.category', 'event']);
 

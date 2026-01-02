@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('venues_categories', function (Blueprint $table) {
@@ -17,16 +14,13 @@ return new class extends Migration
             $table->uuid('price_id');
             $table->timestamps();
             
-            $table->primary(['venue_id', 'category_id']);
+            $table->primary(['venue_id', 'category_id', 'price_id']);
             $table->foreign('venue_id')->references('id')->on('venues')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->foreign('price_id')->references('id')->on('prices')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('venues_categories');

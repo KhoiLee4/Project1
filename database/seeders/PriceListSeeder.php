@@ -12,6 +12,8 @@ class PriceListSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::table('venues_categories')->truncate();
+        
         $venues = Venue::all();
         $categories = \App\Models\Category::all();
 
@@ -37,6 +39,8 @@ class PriceListSeeder extends Seeder
             ['day' => 'Fri-Sun', 'start_time' => '18:00', 'end_time' => '22:00', 'current_price' => 250000, 'fixed_price' => 200000],
         ];
 
+        $totalCreated = 0;
+
         foreach ($venues as $venue) {
             $venueCategoryNames = $venueCategories[$venue->name] ?? [];
             
@@ -54,32 +58,25 @@ class PriceListSeeder extends Seeder
 
             foreach ($venueCategoriesList as $category) {
                 foreach ($timeSlots as $slot) {
-                    $price = Price::firstOrCreate(
-                        [
-                            'day' => $slot['day'],
-                            'start_time' => $slot['start_time'],
-                            'end_time' => $slot['end_time'],
-                        ],
-                        array_merge($slot, [
-                            'id' => Str::uuid()->toString(),
-                        ])
-                    );
+                    $priceId = Str::uuid()->toString();
+                    
+                    $price = Price::create(array_merge($slot, [
+                        'id' => $priceId,
+                    ]));
 
-                    DB::table('venues_categories')->updateOrInsert(
-                        [
-                            'venue_id' => $venue->id,
-                            'category_id' => $category->id,
-                        ],
-                        [
-                            'price_id' => $price->id,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]
-                    );
+                    DB::table('venues_categories')->insert([
+                        'venue_id' => $venue->id,
+                        'category_id' => $category->id,
+                        'price_id' => $price->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $totalCreated++;
                 }
             }
         }
 
-        $this->command->info('Prices seeded successfully!');
+        $this->command->info("Prices seeded successfully! Created {$totalCreated} price relationships.");
     }
 }

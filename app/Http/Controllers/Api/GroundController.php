@@ -21,13 +21,51 @@ class GroundController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        $grounds = $query->get();
+        $grounds = $query->paginate($request->get('per_page', 15));
         return GroundResource::collection($grounds);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'venue_id' => 'required|exists:venues,id',
+            'category_id' => 'required|exists:categories,id',
+        ]);
+
+        $ground = Ground::create($validated);
+        $ground->load(['venue', 'category']);
+        return new GroundResource($ground);
     }
 
     public function show(string $id)
     {
         $ground = Ground::with(['venue', 'category'])->findOrFail($id);
         return new GroundResource($ground);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        $ground = Ground::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'venue_id' => 'required|exists:venues,id',
+            'category_id' => 'required|exists:categories,id',
+        ]);
+
+        $ground->update($validated);
+        $ground->load(['venue', 'category']);
+        return new GroundResource($ground);
+    }
+
+    public function destroy(string $id)
+    {
+        $ground = Ground::findOrFail($id);
+        $ground->delete();
+
+        return response()->json([
+            'message' => 'Ground deleted successfully'
+        ]);
     }
 }

@@ -13,7 +13,8 @@ class VenueSeeder extends Seeder
 {
     public function run(): void
     {
-        $owners = User::where('is_admin', false)->get();
+        // Lấy owners: role=0, is_admin=0 (owner)
+        $owners = User::where('is_admin', 0)->where('role', 0)->get();
         $categories = Category::all();
 
         if ($owners->isEmpty() || $categories->isEmpty()) {

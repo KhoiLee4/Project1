@@ -20,7 +20,6 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // Create owner users
         $owners = [
             [
                 'phone_number' => '0987654321',
@@ -29,8 +28,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'gender' => false,
                 'birthday' => now()->subYears(35),
-                'role' => true,
-                'is_admin' => false,
+                'role' => 0,
+                'is_admin' => 0,
                 'is_active' => true,
             ],
             [
@@ -40,8 +39,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'gender' => true,
                 'birthday' => now()->subYears(30),
-                'role' => true,
-                'is_admin' => false,
+                'role' => 0,
+                'is_admin' => 0,
                 'is_active' => true,
             ],
         ];
@@ -57,8 +56,7 @@ class UserSeeder extends Seeder
             );
         }
 
-        // Create regular users
-        $users = [
+        $customers = [
             [
                 'phone_number' => '0123456780',
                 'email' => 'user1@example.com',
@@ -66,6 +64,9 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'gender' => true,
                 'birthday' => now()->subYears(25),
+                'role' => 1,
+                'is_admin' => 0,
+                'is_active' => true,
             ],
             [
                 'phone_number' => '0123456781',
@@ -74,6 +75,9 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'gender' => false,
                 'birthday' => now()->subYears(28),
+                'role' => 1,
+                'is_admin' => 0,
+                'is_active' => true,
             ],
             [
                 'phone_number' => '0123456782',
@@ -82,17 +86,17 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'gender' => false,
                 'birthday' => now()->subYears(22),
+                'role' => 1,
+                'is_admin' => 0,
+                'is_active' => true,
             ],
         ];
 
-        foreach ($users as $userData) {
+        foreach ($customers as $userData) {
             User::firstOrCreate(
                 ['email' => $userData['email']],
                 array_merge($userData, [
                     'id' => Str::uuid()->toString(),
-                    'role' => true,
-                    'is_admin' => false,
-                    'is_active' => true,
                     'avatar_id' => $defaultImage->id,
                     'cover_image_id' => $defaultImage->id,
                 ])

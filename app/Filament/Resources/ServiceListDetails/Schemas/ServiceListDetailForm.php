@@ -14,7 +14,8 @@ class ServiceListDetailForm
             ->components([
                 Select::make('service_list_id')
                     ->label('Service List')
-                    ->relationship('serviceList', 'name')
+                    ->relationship('serviceList', 'name', modifyQueryUsing: fn ($query) => $query->with('venue'))
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->name . ' - ' . ($record->venue->name ?? 'N/A'))
                     ->searchable()
                     ->preload()
                     ->required(),

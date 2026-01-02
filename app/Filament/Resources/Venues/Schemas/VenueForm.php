@@ -23,20 +23,59 @@ class VenueForm
                 TextInput::make('sub_address')
                     ->label('Street Address')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->live(onBlur: false)
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $subAddress = $state ?? '';
+                        $district = $get('district') ?? '';
+                        $city = $get('city') ?? '';
+                        $fullAddress = trim(implode(', ', array_filter([$subAddress, $district, $city])));
+                        if ($fullAddress) {
+                            $set('address', $fullAddress);
+                        }
+                    }),
                 TextInput::make('district')
                     ->label('District')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->live(onBlur: false)
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $subAddress = $get('sub_address') ?? '';
+                        $district = $state ?? '';
+                        $city = $get('city') ?? '';
+                        $fullAddress = trim(implode(', ', array_filter([$subAddress, $district, $city])));
+                        if ($fullAddress) {
+                            $set('address', $fullAddress);
+                        }
+                    }),
                 TextInput::make('city')
                     ->label('City')
                     ->required()
-                    ->maxLength(100),
-                Textarea::make('address')
+                    ->maxLength(100)
+                    ->live(onBlur: false)
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $subAddress = $get('sub_address') ?? '';
+                        $district = $get('district') ?? '';
+                        $city = $state ?? '';
+                        $fullAddress = trim(implode(', ', array_filter([$subAddress, $district, $city])));
+                        if ($fullAddress) {
+                            $set('address', $fullAddress);
+                        }
+                    }),
+                TextInput::make('address')
                     ->label('Full Address')
-                    ->required()
+                    ->disabled()
+                    ->dehydrated(true)
                     ->maxLength(300)
-                    ->rows(2),
+                    ->afterStateHydrated(function ($state, callable $set, $get) {
+                        $subAddress = $get('sub_address') ?? '';
+                        $district = $get('district') ?? '';
+                        $city = $get('city') ?? '';
+                        $fullAddress = trim(implode(', ', array_filter([$subAddress, $district, $city])));
+                        if ($fullAddress) {
+                            $set('address', $fullAddress);
+                        }
+                    }),
                 TextInput::make('operating_time')
                     ->label('Operating Time')
                     ->placeholder('e.g., 6:00 – 22:00')

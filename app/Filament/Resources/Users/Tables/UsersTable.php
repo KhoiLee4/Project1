@@ -32,10 +32,12 @@ class UsersTable
                         if ($record->is_admin == 1) {
                             return 'Admin';
                         }                   
-                        if ($record->role == 1) {
+                        elseif ($record->is_admin == 0 && $record->role == 1) {
                             return 'User';
                         }
-                        return 'Owner';
+                        else{
+                            return 'Owner';
+                        }
                     })
                     ->colors([
                         'primary' => 'User',

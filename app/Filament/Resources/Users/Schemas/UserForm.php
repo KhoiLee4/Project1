@@ -34,6 +34,7 @@ class UserForm
                 TextInput::make('password')
                     ->label('Password')
                     ->password()
+                    ->revealable()
                     ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser)
                     ->dehydrated(fn ($state) => filled($state))
                     ->minLength(8),
@@ -46,7 +47,7 @@ class UserForm
                     ->required()
                     ->default(1)
                     ->dehydrateStateUsing(fn($state) => is_null($state) ? null : (int) $state)
-                    ->reactive(),
+                    ->live(),
                 DatePicker::make('birthday')
                     ->label('Birthday')
                     ->default(now())
