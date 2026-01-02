@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Prices\Schemas;
 
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Schema;
@@ -13,6 +14,34 @@ class PriceForm
     {
         return $schema
             ->components([
+                Select::make('venue_id')
+                    ->label('Venue')
+                    ->options(function () {
+                        return \App\Models\Venue::pluck('name', 'id')->toArray();
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->live(onBlur: false)
+                    ->dehydrated(false),
+                Select::make('category_id')
+                    ->label('Category')
+                    ->options(function ($get) {
+                        $venueId = $get('venue_id');
+                        if ($venueId) {
+                            $venue = \App\Models\Venue::with('categories')->find($venueId);
+                            if ($venue && $venue->categories->isNotEmpty()) {
+                                return $venue->categories->pluck('name', 'id')->toArray();
+                            }
+                        }
+                        return [];
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->visible(fn ($get) => !empty($get('venue_id')))
+                    ->live(onBlur: false)
+                    ->dehydrated(false),
                 DatePicker::make('date')
                     ->label('Apply Date')
                     ->displayFormat('d/m/Y')

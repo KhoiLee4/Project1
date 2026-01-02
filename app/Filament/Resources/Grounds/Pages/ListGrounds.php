@@ -19,9 +19,15 @@ class ListGrounds extends ListRecords
     protected function getTableQuery(): Builder
     {
         $query = parent::getTableQuery();
+        $user = auth()->user();
 
         if ($venueId = request()->get('venue_id')) {
             $query->where('venue_id', $venueId);
+        }
+
+        if ($user && $user->is_admin == 0 && $user->role == 0) {
+            $venueIds = \App\Models\Venue::where('owner_id', $user->id)->pluck('id')->toArray();
+            $query->whereIn('venue_id', $venueIds);
         }
 
         return $query;

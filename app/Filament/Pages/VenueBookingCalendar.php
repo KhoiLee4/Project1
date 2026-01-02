@@ -16,6 +16,8 @@ class VenueBookingCalendar extends Page
 
     protected static bool $shouldRegisterNavigation = false;
 
+    protected static ?string $slug = 'venue-booking-calendar';
+
     protected string $view = 'filament.pages.venue-booking-calendar';
 
     public Venue $venue;
@@ -29,9 +31,13 @@ class VenueBookingCalendar extends Page
     public function mount(): void
     {
         $venueId = request()->query('venue');
-        $this->venue = Venue::findOrFail($venueId);
+        if (!$venueId) {
+            abort(404, 'Venue not found');
+        }
+        
+        $this->venue = Venue::with('grounds')->findOrFail($venueId);
         $this->selectedDate = Carbon::parse(request()->query('date', now()->toDateString()));
-        $this->grounds = $this->venue->grounds()->get();
+        $this->grounds = $this->venue->grounds()->orderBy('name')->get();
         
         $this->loadBookings();
         $this->generateTimeSlots();
@@ -54,14 +60,15 @@ class VenueBookingCalendar extends Page
         })
             ->where('date', $this->selectedDate->toDateString())
             ->where('status', '!=', 'Cancelled')
+            ->with(['user', 'ground', 'event'])
             ->get();
     }
 
     private function generateTimeSlots(): void
     {
-        // Generate time slots from 6:00 to 23:00 in 30-minute intervals
+        $this->timeSlots = [];
         $start = Carbon::createFromTimeString('06:00');
-        $end = Carbon::createFromTimeString('23:00');
+        $end = Carbon::createFromTimeString('22:00');
         
         while ($start <= $end) {
             $this->timeSlots[] = $start->format('H:i');
@@ -69,54 +76,64 @@ class VenueBookingCalendar extends Page
         }
     }
 
-    public function getBookingForGroundAtTime($groundId, $time): ?Booking
+    public function getBookingStatus($groundId, $timeSlot): ?array
     {
-        $timeObj = Carbon::createFromTimeString($time);
+        $timeObj = Carbon::createFromTimeString($timeSlot);
         
-        return $this->bookings->first(function ($booking) use ($groundId, $timeObj) {
+        $booking = $this->bookings->first(function ($booking) use ($groundId, $timeObj) {
             if ($booking->ground_id !== $groundId) {
                 return false;
             }
             
             $startTime = is_string($booking->start_time) 
                 ? Carbon::createFromTimeString($booking->start_time)
-                : $booking->start_time;
+                : Carbon::parse($booking->start_time);
             $endTime = is_string($booking->end_time)
                 ? Carbon::createFromTimeString($booking->end_time)
-                : $booking->end_time;
+                : Carbon::parse($booking->end_time);
             
-            // Check if current time slot falls within the booking period
             return $timeObj >= $startTime && $timeObj < $endTime;
         });
-    }
 
-    public function isBookingStart($groundId, $time): bool
-    {
-        $booking = $this->getBookingForGroundAtTime($groundId, $time);
         if (!$booking) {
-            return false;
+            return null;
         }
-        
+
         $startTime = is_string($booking->start_time) 
             ? Carbon::createFromTimeString($booking->start_time)
-            : $booking->start_time;
-        
-        $timeObj = Carbon::createFromTimeString($time);
-        return $timeObj->format('H:i') === $startTime->format('H:i');
+            : Carbon::parse($booking->start_time);
+        $endTime = is_string($booking->end_time)
+            ? Carbon::createFromTimeString($booking->end_time)
+            : Carbon::parse($booking->end_time);
+
+        $isStart = $timeObj->format('H:i') === $startTime->format('H:i');
+        $duration = $endTime->diffInMinutes($startTime);
+        $slots = max(1, intval($duration / 30));
+
+        return [
+            'booking' => $booking,
+            'is_start' => $isStart,
+            'slots' => $slots,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+        ];
     }
 
     public function previousDay(): void
     {
         $this->selectedDate = $this->selectedDate->copy()->subDay();
+        $this->loadBookings();
     }
 
     public function nextDay(): void
     {
         $this->selectedDate = $this->selectedDate->copy()->addDay();
+        $this->loadBookings();
     }
 
     public function goToDate($date): void
     {
         $this->selectedDate = Carbon::parse($date);
+        $this->loadBookings();
     }
 }

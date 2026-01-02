@@ -88,4 +88,16 @@ class PaymentController extends Controller
         $payment->update($validated);
         return new PaymentResource($payment);
     }
+
+    public function myPayments(Request $request)
+    {
+        $payments = Payment::with('booking.ground.venue')
+            ->whereHas('booking', function($q) use ($request) {
+                $q->where('user_id', $request->user()->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 15));
+        
+        return PaymentResource::collection($payments);
+    }
 }

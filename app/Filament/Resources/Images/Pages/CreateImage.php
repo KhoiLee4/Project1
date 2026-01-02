@@ -3,12 +3,25 @@
 namespace App\Filament\Resources\Images\Pages;
 
 use App\Filament\Resources\Images\ImageResource;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Storage;
 
 class CreateImage extends CreateRecord
 {
     protected static string $resource = ImageResource::class;
+
+    protected function getFormActions(): array
+    {
+        return [
+            CreateAction::make(),
+            Action::make('cancel')
+                ->label(__('filament-panels::resources/pages/create-record.form.actions.cancel.label'))
+                ->url($this->getResource()::getUrl('index'))
+                ->color('gray'),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

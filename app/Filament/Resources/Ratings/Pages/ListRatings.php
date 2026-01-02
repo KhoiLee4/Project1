@@ -20,6 +20,14 @@ class ListRatings extends ListRecords
 
     protected function getTableQuery(): Builder
     {
-        return parent::getTableQuery()->orderBy('created_at', 'desc');
+        $query = parent::getTableQuery()->orderBy('created_at', 'desc');
+        $user = auth()->user();
+
+        if ($user && $user->is_admin == 0 && $user->role == 0) {
+            $venueIds = \App\Models\Venue::where('owner_id', $user->id)->pluck('id')->toArray();
+            $query->whereIn('venue_id', $venueIds);
+        }
+
+        return $query;
     }
 }

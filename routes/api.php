@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\GroundController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RatingController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\VenueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,21 +32,47 @@ Route::prefix('venues')->group(function () {
     Route::get('/{venueId}/terms', [VenueController::class, 'terms']);
     Route::get('/{venueId}/price-lists', [VenueController::class, 'priceLists']);
     Route::get('/{venueId}/images', [VenueController::class, 'images']);
+    Route::get('/{venueId}/schedule', [VenueController::class, 'schedule']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [VenueController::class, 'store']);
+        Route::post('/{venueId}/calculate-price', [VenueController::class, 'calculatePrice']);
+        Route::put('/{id}', [VenueController::class, 'update']);
+        Route::delete('/{id}', [VenueController::class, 'destroy']);
+    });
 });
 
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
     Route::get('/{id}', [CategoryController::class, 'show']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{id}', [CategoryController::class, 'update']);
+        Route::delete('/{id}', [CategoryController::class, 'destroy']);
+    });
 });
 
 Route::prefix('grounds')->group(function () {
     Route::get('/', [GroundController::class, 'index']);
     Route::get('/{id}', [GroundController::class, 'show']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [GroundController::class, 'store']);
+        Route::put('/{id}', [GroundController::class, 'update']);
+        Route::delete('/{id}', [GroundController::class, 'destroy']);
+    });
 });
 
 Route::prefix('events')->group(function () {
     Route::get('/', [EventController::class, 'index']);
     Route::get('/{id}', [EventController::class, 'show']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [EventController::class, 'store']);
+        Route::put('/{id}', [EventController::class, 'update']);
+        Route::delete('/{id}', [EventController::class, 'destroy']);
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -59,6 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('payments')->group(function () {
         Route::get('/', [PaymentController::class, 'index']);
+        Route::get('/my-payments', [PaymentController::class, 'myPayments']);
         Route::post('/', [PaymentController::class, 'store']);
         Route::get('/{id}', [PaymentController::class, 'show']);
         Route::put('/{id}', [PaymentController::class, 'update']);
@@ -85,3 +113,5 @@ Route::prefix('images')->group(function () {
     Route::get('/{id}', [\App\Http\Controllers\Api\ImageController::class, 'show']);
     Route::delete('/{id}', [\App\Http\Controllers\Api\ImageController::class, 'delete'])->middleware('auth:sanctum');
 });
+
+Route::post('/predict', [SearchController::class, 'predict']);

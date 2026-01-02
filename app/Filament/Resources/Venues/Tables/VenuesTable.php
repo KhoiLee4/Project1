@@ -62,7 +62,7 @@ class VenuesTable
                     ->label('Xem Lịch Đặt Sân')
                     ->icon('heroicon-o-calendar-days')
                     ->color('info')
-                    ->url(fn ($record) => route('filament.admin.pages.venue-booking-calendar', ['venue' => $record->id])),
+                    ->url(fn ($record) => \App\Filament\Pages\VenueBookingCalendar::getUrl() . '?venue=' . $record->id),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

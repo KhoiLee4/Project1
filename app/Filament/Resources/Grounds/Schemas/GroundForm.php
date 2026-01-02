@@ -21,13 +21,27 @@ class GroundForm
                     ->relationship('venue', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->live(onBlur: false),
                 Select::make('category_id')
                     ->label('Category')
-                    ->relationship('category', 'name')
+                    ->relationship('category', 'name', modifyQueryUsing: function ($query, $get) {
+                        $venueId = $get('venue_id');
+                        if ($venueId) {
+                            $venue = \App\Models\Venue::with('categories')->find($venueId);
+                            if ($venue && $venue->categories->isNotEmpty()) {
+                                $categoryIds = $venue->categories->pluck('id')->toArray();
+                                $query->whereIn('id', $categoryIds);
+                            } else {
+                                $query->whereRaw('1 = 0');
+                            }
+                        }
+                        return $query;
+                    })
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->visible(fn ($get) => !empty($get('venue_id'))),
             ]);
     }
 }
