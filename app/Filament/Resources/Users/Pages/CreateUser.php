@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateUser extends CreateRecord
@@ -14,7 +13,8 @@ class CreateUser extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            CreateAction::make(),
+            Action::make('create')
+                ->submit('create'),
             Action::make('cancel')
                 ->label(__('filament-panels::resources/pages/create-record.form.actions.cancel.label'))
                 ->url($this->getResource()::getUrl('index'))

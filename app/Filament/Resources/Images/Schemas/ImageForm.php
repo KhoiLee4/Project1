@@ -20,9 +20,9 @@ class ImageForm
                     ->label('Image')
                     ->image()
                     ->directory('images')
-                    ->disk('public')
+                    ->disk('cloudinary')
                     ->visibility('public')
-                    ->maxSize(10240) // 10MB
+                    ->maxSize(10240)
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'])
                     ->imageEditor()
                     ->imageEditorAspectRatios([
@@ -34,7 +34,7 @@ class ImageForm
                     ->required()
                     ->helperText('Upload image file (max 10MB)')
                     ->getUploadedFileUsing(function ($file) {
-                        return Storage::disk('public')->url($file);
+                        return Storage::disk('cloudinary')->url($file);
                     })
                     ->dehydrated(true),
             ]);

@@ -63,9 +63,9 @@ class AuthController extends Controller
             ], 403);
         }
 
-        if ($user->is_admin == 0 && $user->role == 1) {
+        if ($user->is_admin == 1 || ($user->is_admin == 0 && $user->role == 0)) {
             return response()->json([
-                'message' => 'Bạn không có quyền đăng nhập vào hệ thống này.'
+                'message' => 'Hệ thống này chỉ dành cho người dùng.'
             ], 403);
         }
 

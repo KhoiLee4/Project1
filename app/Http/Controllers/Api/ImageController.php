@@ -13,17 +13,19 @@ class ImageController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'name' => 'nullable|string|max:100',
         ]);
 
         $file = $request->file('image');
         $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('images', $filename, 'public');
+        $path = $file->storeAs('images', $filename, 'cloudinary');
+
+        $imageUrl = Storage::disk('cloudinary')->url($path);
 
         $image = Image::create([
             'name' => $request->name ?? $file->getClientOriginalName(),
-            'image_url' => Storage::url($path),
+            'image_url' => $imageUrl,
         ]);
 
         return response()->json([
@@ -32,7 +34,7 @@ class ImageController extends Controller
                 'id' => $image->id,
                 'name' => $image->name,
                 'url' => $image->image_url,
-                'full_url' => asset($image->image_url),
+                'full_url' => $image->full_url,
             ],
         ], 201);
     }
@@ -45,7 +47,7 @@ class ImageController extends Controller
             'id' => $image->id,
             'name' => $image->name,
             'url' => $image->image_url,
-            'full_url' => asset($image->image_url),
+            'full_url' => $image->full_url,
         ]);
     }
 
@@ -53,12 +55,14 @@ class ImageController extends Controller
     {
         $image = Image::findOrFail($id);
         
-        // Extract path from URL
-        $path = str_replace('/storage/', '', $image->image_url);
-        
-        // Delete file from storage
-        if (Storage::disk('public')->exists('images/' . basename($path))) {
-            Storage::disk('public')->delete('images/' . basename($path));
+        if ($image->image_url && str_starts_with($image->image_url, 'http')) {
+            try {
+                $publicId = $this->extractPublicIdFromUrl($image->image_url);
+                if ($publicId) {
+                    Storage::disk('cloudinary')->delete($publicId);
+                }
+            } catch (\Exception $e) {
+            }
         }
         
         $image->delete();
@@ -66,5 +70,19 @@ class ImageController extends Controller
         return response()->json([
             'message' => 'Image deleted successfully',
         ]);
+    }
+
+    private function extractPublicIdFromUrl(string $url): ?string
+    {
+        $parsedUrl = parse_url($url);
+        if (isset($parsedUrl['path'])) {
+            $path = trim($parsedUrl['path'], '/');
+            $parts = explode('/', $path);
+            if (count($parts) >= 2) {
+                $lastPart = end($parts);
+                return str_replace('.' . pathinfo($lastPart, PATHINFO_EXTENSION), '', $lastPart);
+            }
+        }
+        return null;
     }
 }

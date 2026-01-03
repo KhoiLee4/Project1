@@ -18,11 +18,18 @@ class EditImage extends EditRecord
         ];
     }
 
-    // protected function mutateFormDataBeforeSave(array $data): array
-    // {
-    //     if (isset($data['image_url']) && is_array($data['image_url'])) {
-    //         $data['image_url'] = isset($data['image_url'][0]) ? Storage::disk('public')->url($data['image_url'][0]) : null;
-    //     }
-    //     return $data;
-    // }
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['image_url']) && is_array($data['image_url'])) {
+            $filePath = $data['image_url'][0] ?? $data['image_url'];
+            if ($filePath) {
+                $data['image_url'] = Storage::disk('cloudinary')->url($filePath);
+            }
+        } elseif (isset($data['image_url']) && is_string($data['image_url'])) {
+            if (!str_starts_with($data['image_url'], 'http')) {
+                $data['image_url'] = Storage::disk('cloudinary')->url($data['image_url']);
+            }
+        }
+        return $data;
+    }
 }
