@@ -30,7 +30,6 @@ class Image extends Model
                     ->withTimestamps();
     }
 
-    // Accessor to get full URL
     public function getFullUrlAttribute()
     {
         if (str_starts_with($this->image_url, 'http')) {

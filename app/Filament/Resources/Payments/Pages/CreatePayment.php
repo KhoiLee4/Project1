@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Payments\Pages;
 
 use App\Filament\Resources\Payments\PaymentResource;
 use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreatePayment extends CreateRecord
@@ -128,7 +127,8 @@ class CreatePayment extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            CreateAction::make(),
+            Action::make('create')
+                ->submit('create'),
             Action::make('cancel')
                 ->label(__('filament-panels::resources/pages/create-record.form.actions.cancel.label'))
                 ->url($this->getResource()::getUrl('index'))
