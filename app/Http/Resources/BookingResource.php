@@ -37,6 +37,8 @@ class BookingResource extends JsonResource
                     'id' => $this->event->id ?? null,
                     'name' => $this->event->name ?? null,
                     'price' => $this->event->price ?? null,
+                    'ticket_number' => $this->event->ticket_number ?? null,
+                    'level' => $this->event->level ?? null,
                     'start_date' => $this->event->start_date ?? null,
                     'end_date' => $this->event->end_date ?? null,
                 ];

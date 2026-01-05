@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use App\Models\Price;
 use App\Models\Venue;
 use Illuminate\Database\Seeder;
@@ -12,62 +13,40 @@ class PriceListSeeder extends Seeder
 {
     public function run(): void
     {
+        // Xóa dữ liệu cũ bảng trung gian để tránh trùng lặp nếu chạy lại
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('venues_categories')->truncate();
-        DB::table('prices')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        
+
         $venues = Venue::all();
-        $categories = \App\Models\Category::all();
+        $categories = Category::all();
 
-        if ($venues->isEmpty() || $categories->isEmpty()) {
-            $this->command->warn('Please run VenueSeeder and CategorySeeder first!');
-            return;
-        }
-
-        $venueCategories = [
-            'Football Center Hoang Mai' => ['Football'],
-            'Badminton Club Cau Giay' => ['Badminton'],
-            'Multi-Sport Complex' => ['Football', 'Basketball', 'Tennis'],
-            'Tennis Academy' => ['Tennis', 'Table Tennis'],
-            'Volleyball Arena' => ['Volleyball'],
-        ];
+        if ($venues->isEmpty() || $categories->isEmpty()) return;
 
         $timeSlots = [
-            ['day' => 'Mon-Thu', 'start_time' => '06:00', 'end_time' => '12:00', 'current_price' => 100000, 'fixed_price' => 80000],
-            ['day' => 'Mon-Thu', 'start_time' => '12:00', 'end_time' => '18:00', 'current_price' => 150000, 'fixed_price' => 120000],
-            ['day' => 'Mon-Thu', 'start_time' => '18:00', 'end_time' => '22:00', 'current_price' => 200000, 'fixed_price' => 160000],
-            ['day' => 'Fri-Sun', 'start_time' => '06:00', 'end_time' => '12:00', 'current_price' => 120000, 'fixed_price' => 100000],
-            ['day' => 'Fri-Sun', 'start_time' => '12:00', 'end_time' => '18:00', 'current_price' => 180000, 'fixed_price' => 150000],
-            ['day' => 'Fri-Sun', 'start_time' => '18:00', 'end_time' => '22:00', 'current_price' => 250000, 'fixed_price' => 200000],
+            ['day' => 'Mon-Fri', 'start_time' => '05:00', 'end_time' => '17:00', 'current_price' => 100000],
+            ['day' => 'Mon-Fri', 'start_time' => '17:00', 'end_time' => '23:00', 'current_price' => 150000],
+            ['day' => 'Sat-Sun', 'start_time' => '05:00', 'end_time' => '23:00', 'current_price' => 200000],
         ];
 
-        $totalCreated = 0;
-
         foreach ($venues as $venue) {
-            $venueCategoryNames = $venueCategories[$venue->name] ?? [];
-            
-            if (empty($venueCategoryNames)) {
-                continue;
-            }
+            // Mỗi venue lấy NGẪU NHIÊN 2 category khác nhau
+            $venueCategories = $categories->random(2); 
 
-            $venueCategoriesList = $categories->filter(function($category) use ($venueCategoryNames) {
-                return in_array($category->name, $venueCategoryNames);
-            });
-            
-            if ($venueCategoriesList->isEmpty()) {
-                continue;
-            }
-
-            foreach ($venueCategoriesList as $category) {
-                $randomSlot = $timeSlots[array_rand($timeSlots)];
-
-                $priceId = Str::uuid()->toString();
+            foreach ($venueCategories as $category) {
+                // Tạo giá cho category này tại venue này
+                $slot = $timeSlots[array_rand($timeSlots)];
                 
-                $price = Price::create(array_merge($randomSlot, [
-                    'id' => $priceId,
-                ]));
+                $price = Price::create([
+                    'id' => Str::uuid()->toString(),
+                    'day' => $slot['day'],
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                    'current_price' => $slot['current_price'],
+                    'fixed_price' => $slot['current_price'] * 0.8,
+                ]);
 
+                // Insert vào bảng trung gian
                 DB::table('venues_categories')->insert([
                     'venue_id' => $venue->id,
                     'category_id' => $category->id,
@@ -75,11 +54,8 @@ class PriceListSeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
-                $totalCreated++;
             }
         }
-
-        $this->command->info("Prices seeded successfully! Created {$totalCreated} price relationships.");
+        $this->command->info('Assigned 2 Categories to each of 15 Venues!');
     }
 }

@@ -126,7 +126,7 @@ class BookingController extends Controller
 
             if ($conflictingBooking) {
                 return response()->json([
-                    'message' => 'This time slot is already booked. Please choose another time.',
+                    'message' => 'Khung giờ này đã được đặt. Vui lòng chọn khung giờ khác.',
                     'conflicting_booking' => [
                         'id' => $conflictingBooking->id,
                         'start_time' => $conflictingBooking->start_time,
