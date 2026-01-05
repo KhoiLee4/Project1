@@ -21,4 +21,10 @@ class CreateBooking extends CreateRecord
                 ->color('gray'),
         ];
     }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        unset($data['venue_id']);
+        return $data;
+    }
 }

@@ -17,6 +17,7 @@ class BookingForm
     {
         $isEdit = $schema->getLivewire() instanceof \Filament\Resources\Pages\EditRecord;
         $currentUserId = $isEdit ? $schema->getLivewire()->record->user_id : null;
+        $isReadOnly = $isEdit && in_array($schema->getLivewire()->record->status ?? '', ['Cancelled', 'Completed']);
         
         return $schema
             ->components([
@@ -109,46 +110,126 @@ class BookingForm
                 DatePicker::make('date')
                     ->label('Date')
                     ->required()
-                    ->displayFormat('d/m/Y'),
+                    ->displayFormat('d/m/Y')
+                    ->disabled($isReadOnly),
                 TimePicker::make('start_time')
                     ->label('Start Time')
                     ->required()
-                    ->seconds(false),
+                    ->seconds(false)
+                    ->disabled($isReadOnly)
+                    ->live(onBlur: false)
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $startTime = $state;
+                        $endTime = $get('end_time');
+                        if ($startTime && $endTime) {
+                            try {
+                                $start = \Carbon\Carbon::parse($startTime);
+                                $end = \Carbon\Carbon::parse($endTime);
+                                $hours = $end->diffInMinutes($start) / 60;
+                                $set('amount_time', max(0, round($hours, 2)));
+                            } catch (\Exception $e) {
+                                $set('amount_time', 0);
+                            }
+                        }
+                    }),
                 TimePicker::make('end_time')
                     ->label('End Time')
                     ->required()
-                    ->seconds(false),
+                    ->seconds(false)
+                    ->disabled($isReadOnly)
+                    ->live(onBlur: false)
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $startTime = $get('start_time');
+                        $endTime = $state;
+                        if ($startTime && $endTime) {
+                            try {
+                                $start = \Carbon\Carbon::parse($startTime);
+                                $end = \Carbon\Carbon::parse($endTime);
+                                $hours = $end->diffInMinutes($start) / 60;
+                                $set('amount_time', max(0, round($hours, 2)));
+                            } catch (\Exception $e) {
+                                $set('amount_time', 0);
+                            }
+                        }
+                    }),
                 TextInput::make('amount_time')
                     ->label('Total Hours')
                     ->numeric()
                     ->required()
-                    ->default(1),
+                    ->default(1)
+                    ->disabled()
+                    ->dehydrated(true),
                 Toggle::make('is_event')
                     ->label('Is Event (1=Event, 0=Normal)')
                     ->default(false)
-                    ->required(),
+                    ->required()
+                    ->disabled($isReadOnly),
+                Select::make('venue_id')
+                    ->label('Venue')
+                    ->options(function () {
+                        $user = auth()->user();
+                        if ($user && $user->is_admin == 1) {
+                            return \App\Models\Venue::pluck('name', 'id')->toArray();
+                        } elseif ($user && $user->is_admin == 0 && $user->role == 0) {
+                            return \App\Models\Venue::where('owner_id', $user->id)->pluck('name', 'id')->toArray();
+                        }
+                        return [];
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->disabled($isReadOnly)
+                    ->live(onBlur: false)
+                    ->dehydrated(false)
+                    ->visible(fn () => auth()->check() && (auth()->user()->is_admin == 1 || (auth()->user()->is_admin == 0 && auth()->user()->role == 0))),
                 Select::make('ground_id')
                     ->label('Ground')
-                    ->relationship('ground', 'name')
+                    ->options(function ($get) {
+                        $venueId = $get('venue_id');
+                        $user = auth()->user();
+                        
+                        if ($venueId) {
+                            return \App\Models\Ground::where('venue_id', $venueId)->pluck('name', 'id')->toArray();
+                        }
+                        
+                        if ($user && $user->is_admin == 1) {
+                            return \App\Models\Ground::pluck('name', 'id')->toArray();
+                        } elseif ($user && $user->is_admin == 0 && $user->role == 0) {
+                            $venueIds = \App\Models\Venue::where('owner_id', $user->id)->pluck('id')->toArray();
+                            return \App\Models\Ground::whereIn('venue_id', $venueIds)->pluck('name', 'id')->toArray();
+                        }
+                        
+                        return \App\Models\Ground::pluck('name', 'id')->toArray();
+                    })
+                    ->searchable()
                     ->preload()
-                    ->required(),
-                TextInput::make('target')
+                    ->required()
+                    ->disabled($isReadOnly)
+                    ->live(onBlur: false),
+                Select::make('target')
                     ->label('Target Audience')
-                    ->maxLength(255)
-                    ->placeholder('e.g., students'),
+                    ->options([
+                        'student' => 'Student',
+                        'adult' => 'Người lớn',
+                    ])
+                    ->searchable()
+                    ->disabled($isReadOnly),
                 Textarea::make('customer_note')
                     ->label('Customer Note')
                     ->rows(3)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->disabled($isReadOnly),
                 Textarea::make('owner_note')
                     ->label('Owner Note')
                     ->rows(3)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->disabled($isReadOnly),
                 TextInput::make('quantity')
                     ->label('Quantity (People/Tickets)')
                     ->numeric()
                     ->default(30)
-                    ->required(),
+                    ->required()
+                    ->disabled($isReadOnly),
                 Select::make('status')
                     ->label('Status')
                     ->options([
@@ -158,12 +239,14 @@ class BookingForm
                         'Completed' => 'Completed',
                     ])
                     ->required()
-                    ->default('Pending'),
+                    ->default('Pending')
+                    ->disabled($isReadOnly),
                 Select::make('event_id')
                     ->label('Event')
                     ->relationship('event', 'name')
                     ->preload()
-                    ->visible(fn ($get) => $get('is_event')),
+                    ->visible(fn ($get) => $get('is_event'))
+                    ->disabled($isReadOnly),
             ]);
     }
 }

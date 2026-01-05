@@ -12,7 +12,10 @@ class PriceListSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('venues_categories')->truncate();
+        DB::table('prices')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         
         $venues = Venue::all();
         $categories = \App\Models\Category::all();
@@ -57,23 +60,23 @@ class PriceListSeeder extends Seeder
             }
 
             foreach ($venueCategoriesList as $category) {
-                foreach ($timeSlots as $slot) {
-                    $priceId = Str::uuid()->toString();
-                    
-                    $price = Price::create(array_merge($slot, [
-                        'id' => $priceId,
-                    ]));
+                $randomSlot = $timeSlots[array_rand($timeSlots)];
 
-                    DB::table('venues_categories')->insert([
-                        'venue_id' => $venue->id,
-                        'category_id' => $category->id,
-                        'price_id' => $price->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                $priceId = Str::uuid()->toString();
+                
+                $price = Price::create(array_merge($randomSlot, [
+                    'id' => $priceId,
+                ]));
 
-                    $totalCreated++;
-                }
+                DB::table('venues_categories')->insert([
+                    'venue_id' => $venue->id,
+                    'category_id' => $category->id,
+                    'price_id' => $price->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $totalCreated++;
             }
         }
 

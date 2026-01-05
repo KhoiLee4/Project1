@@ -148,4 +148,18 @@ class CreatePayment extends CreateRecord
         
         return $data;
     }
+
+    protected function afterCreate(): void
+    {
+        if ($this->record->booking_id) {
+            $booking = \App\Models\Booking::find($this->record->booking_id);
+            if ($booking) {
+                if ($this->record->status === 'Paid') {
+                    $booking->update(['status' => 'Completed']);
+                } elseif ($this->record->status === 'Pending') {
+                    // Payment pending - booking vẫn giữ status hiện tại (Confirmed)
+                }
+            }
+        }
+    }
 }

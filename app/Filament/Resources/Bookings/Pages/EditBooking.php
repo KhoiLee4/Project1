@@ -36,7 +36,6 @@ class EditBooking extends EditRecord
     {
         parent::mount($record);
         
-        // Load relationships to ensure they're available in the form
         $this->record->load(['user', 'ground.venue']);
         
         $user = auth()->user();
@@ -45,5 +44,24 @@ class EditBooking extends EditRecord
                 abort(403, 'Bạn không có quyền chỉnh sửa booking này.');
             }
         }
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Disable all fields if booking is cancelled or completed
+        if (in_array($this->record->status, ['Cancelled', 'Completed'])) {
+            $this->form->disabled();
+        }
+        
+        if ($this->record->ground && $this->record->ground->venue) {
+            $data['venue_id'] = $this->record->ground->venue->id;
+        }
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        unset($data['venue_id']);
+        return $data;
     }
 }

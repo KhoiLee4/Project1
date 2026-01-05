@@ -211,6 +211,8 @@ class VenueController extends Controller
             'start_time' => 'required|string',
             'end_time' => 'required|string|after:start_time',
             'ground_id' => 'required|exists:grounds,id',
+            'category_id' => 'sometimes|exists:categories,id',
+            'target' => 'nullable|string',
         ]);
         
         $ground = \App\Models\Ground::with(['venue', 'category'])->findOrFail($validated['ground_id']);
@@ -222,7 +224,7 @@ class VenueController extends Controller
         }
         
         $venueId = $ground->venue_id;
-        $categoryId = $ground->category_id;
+        $categoryId = $validated['category_id'] ?? $ground->category_id;
         
         $bookingDate = \Carbon\Carbon::parse($validated['date']);
         $dayOfWeek = $bookingDate->dayOfWeek;
@@ -234,55 +236,138 @@ class VenueController extends Controller
         
         $startTime = \Carbon\Carbon::parse($validated['start_time']);
         $endTime = \Carbon\Carbon::parse($validated['end_time']);
-        $hours = $endTime->diffInHours($startTime);
-        $bookingStartTime = $startTime->format('H:i');
+        $totalHours = $endTime->diffInMinutes($startTime) / 60;
         
-        $price = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
+        $prices = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
             $query->where('venues.id', $venueId)
                   ->where('venues_categories.category_id', $categoryId);
         })
-        ->where('day', $dayGroup)
-        ->where('start_time', '<=', $bookingStartTime)
-        ->where('end_time', '>', $bookingStartTime)
-        ->first();
+        ->where(function($query) use ($bookingDate, $dayGroup) {
+            $query->where('date', $bookingDate->toDateString())
+                  ->orWhere(function($q) use ($dayGroup) {
+                      $q->whereNull('date')->where('day', $dayGroup);
+                  });
+        })
+        ->orderBy('start_time')
+        ->get();
         
-        if (!$price) {
-            $price = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
+        if ($prices->isEmpty()) {
+            $prices = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
                 $query->where('venues.id', $venueId)
                       ->where('venues_categories.category_id', $categoryId);
             })
             ->where('day', $dayGroup)
-            ->first();
+            ->orderBy('start_time')
+            ->get();
         }
         
-        if (!$price) {
-            $price = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
+        if ($prices->isEmpty()) {
+            $prices = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
                 $query->where('venues.id', $venueId)
                       ->where('venues_categories.category_id', $categoryId);
-            })->first();
+            })
+            ->orderBy('start_time')
+            ->get();
         }
         
-        if ($price) {
-            $unitPrice = $price->current_price ?? $price->fixed_price ?? 0;
-            $totalAmount = round($unitPrice * $hours, 2);
+        $totalPrice = 0;
+        $priceDetails = [];
+        
+        if ($prices->isNotEmpty()) {
+            $currentTime = $startTime->copy();
             
-            return response()->json([
-                'unit_price' => $unitPrice,
-                'hours' => $hours,
-                'total_amount' => $totalAmount,
-                'price_details' => [
-                    'day_group' => $dayGroup,
-                    'fixed_price' => $price->fixed_price,
-                    'current_price' => $price->current_price,
-                ]
-            ]);
+            while ($currentTime < $endTime) {
+                $matchingPrice = $prices->first(function($price) use ($currentTime) {
+                    $priceStart = \Carbon\Carbon::parse($price->start_time);
+                    $priceEnd = \Carbon\Carbon::parse($price->end_time);
+                    return $currentTime->format('H:i') >= $priceStart->format('H:i') && 
+                           $currentTime->format('H:i') < $priceEnd->format('H:i');
+                });
+                
+                if (!$matchingPrice) {
+                    $matchingPrice = $prices->first();
+                }
+                
+                if ($matchingPrice) {
+                    $nextBoundary = $endTime->copy();
+                    
+                    foreach ($prices as $price) {
+                        $priceStart = \Carbon\Carbon::parse($price->start_time);
+                        $priceEnd = \Carbon\Carbon::parse($price->end_time);
+                        
+                        if ($priceStart->gt($currentTime) && $priceStart->lt($nextBoundary)) {
+                            $nextBoundary = $priceStart->copy();
+                        }
+                        if ($priceEnd->gt($currentTime) && $priceEnd->lt($nextBoundary) && $priceEnd->gt($priceStart)) {
+                            $nextBoundary = $priceEnd->copy();
+                        }
+                    }
+                    
+                    $hoursInSegment = $currentTime->diffInMinutes($nextBoundary) / 60;
+                    $unitPrice = $matchingPrice->current_price ?? $matchingPrice->fixed_price ?? 0;
+                    $segmentPrice = $unitPrice * $hoursInSegment;
+                    $totalPrice += $segmentPrice;
+                    
+                    $priceDetails[] = [
+                        'start_time' => $currentTime->format('H:i'),
+                        'end_time' => $nextBoundary->format('H:i'),
+                        'hours' => round($hoursInSegment, 2),
+                        'unit_price' => $unitPrice,
+                        'price' => round($segmentPrice, 2),
+                    ];
+                    
+                    $currentTime = $nextBoundary;
+                } else {
+                    break;
+                }
+            }
         }
         
         return response()->json([
-            'unit_price' => 0,
-            'hours' => $hours,
-            'total_amount' => 0,
-            'message' => 'No price found for this venue and category'
+            'totalPrice' => round($totalPrice, 2),
+            'totalHours' => round($totalHours, 2),
+            'unit_price' => $totalHours > 0 ? round($totalPrice / $totalHours, 2) : 0,
+            'price_details' => $priceDetails,
+        ]);
+    }
+
+    public function priceInfo(string $venueId, string $categoryId)
+    {
+        $venue = Venue::findOrFail($venueId);
+        $category = \App\Models\Category::findOrFail($categoryId);
+        
+        $pivot = \Illuminate\Support\Facades\DB::table('venues_categories')
+            ->where('venue_id', $venueId)
+            ->where('category_id', $categoryId)
+            ->first();
+        
+        $priceId = $pivot->price_id ?? null;
+        
+        $prices = [];
+        if ($priceId) {
+            $prices = \App\Models\Price::where('id', $priceId)->get();
+        } else {
+            $prices = \App\Models\Price::whereHas('venues', function($query) use ($venueId, $categoryId) {
+                $query->where('venues.id', $venueId)
+                      ->where('venues_categories.category_id', $categoryId);
+            })->get();
+        }
+        
+        return response()->json([
+            'venueId' => $venueId,
+            'categoryId' => $categoryId,
+            'priceId' => $priceId,
+            'prices' => $prices->map(function($price) {
+                return [
+                    'id' => $price->id,
+                    'date' => $price->date,
+                    'day' => $price->day,
+                    'start_time' => $price->start_time,
+                    'end_time' => $price->end_time,
+                    'fixed_price' => $price->fixed_price,
+                    'current_price' => $price->current_price,
+                ];
+            }),
         ]);
     }
 }

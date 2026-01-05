@@ -76,11 +76,17 @@ class VenueForm
                             $set('address', $fullAddress);
                         }
                     }),
-                TextInput::make('operating_time')
+                Select::make('operating_time')
                     ->label('Operating Time')
-                    ->placeholder('e.g., 6:00 – 22:00')
+                    ->options([
+                        '6:00 - 22:00' => '6:00 - 22:00',
+                        '7:00 - 23:00' => '7:00 - 23:00',
+                        '8:00 - 20:00' => '8:00 - 20:00',
+                        '9:00 - 21:00' => '9:00 - 21:00',
+                        '24/7' => '24/7',
+                    ])
                     ->required()
-                    ->maxLength(100),
+                    ->searchable(),
                 TextInput::make('phone_number1')
                     ->label('Phone Number 1')
                     ->tel()

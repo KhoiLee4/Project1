@@ -89,11 +89,49 @@ class BookingsTable
                     }),
             ])
             ->recordActions([
+                Action::make('confirm')
+                    ->label('Duyệt')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update(['status' => 'Confirmed']);
+                        // Tạo payment pending khi confirm
+                        $payment = \App\Models\Payment::firstOrCreate(
+                            ['booking_id' => $record->id],
+                            [
+                                'amount' => 0,
+                                'unit_price' => 0,
+                                'method' => 'Cash',
+                                'status' => 'Pending',
+                            ]
+                        );
+                        \Filament\Notifications\Notification::make()
+                            ->success()
+                            ->title('Booking confirmed')
+                            ->send();
+                    })
+                    ->visible(fn ($record) => $record->status === 'Pending'),
+                Action::make('cancel')
+                    ->label('Hủy')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update(['status' => 'Cancelled']);
+                        // Hủy payment nếu có
+                        \App\Models\Payment::where('booking_id', $record->id)->update(['status' => 'Cancelled']);
+                        \Filament\Notifications\Notification::make()
+                            ->success()
+                            ->title('Booking cancelled')
+                            ->send();
+                    })
+                    ->visible(fn ($record) => in_array($record->status, ['Pending', 'Confirmed'])),
                 Action::make('createPayment')
-                    ->label('Pay')
+                    ->label('Thanh toán')
                     ->icon('heroicon-o-credit-card')
                     ->url(fn ($record) => \App\Filament\Resources\Payments\PaymentResource::getUrl('create') . '?booking_id=' . $record->id)
-                    ->visible(fn ($record) => in_array($record->status, ['Pending', 'Confirm']))
+                    ->visible(fn ($record) => $record->status === 'Confirmed')
                     ->color('warning'),
                 EditAction::make(),
             ])

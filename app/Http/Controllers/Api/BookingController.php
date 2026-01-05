@@ -152,4 +152,30 @@ class BookingController extends Controller
 
         return BookingResource::collection($bookings);
     }
+
+    public function confirm(Request $request, string $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        if ($booking->user_id !== $request->user()->id && !$request->user()->is_admin) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $booking->update(['status' => 'Confirmed']);
+
+        return new BookingResource($booking->load(['user', 'ground.venue', 'ground.category', 'event', 'payments']));
+    }
+
+    public function cancel(Request $request, string $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        if ($booking->user_id !== $request->user()->id && !$request->user()->is_admin) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $booking->update(['status' => 'Cancelled']);
+
+        return new BookingResource($booking->load(['user', 'ground.venue', 'ground.category', 'event', 'payments']));
+    }
 }

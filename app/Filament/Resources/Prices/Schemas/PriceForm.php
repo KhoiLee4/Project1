@@ -46,10 +46,16 @@ class PriceForm
                     ->label('Apply Date')
                     ->displayFormat('d/m/Y')
                     ->helperText('e.g., 30/4 - 1/5'),
-                TextInput::make('day')
+                Select::make('day')
                     ->label('Day of Week')
-                    ->maxLength(20)
-                    ->placeholder('e.g., Mon-Thu, Fri-Sun'),
+                    ->options([
+                        'Mon-Thu' => 'Monday - Thursday',
+                        'Fri-Sun' => 'Friday - Sunday',
+                        'Mon-Fri' => 'Monday - Friday',
+                        'Sat-Sun' => 'Saturday - Sunday',
+                        'All Week' => 'All Week',
+                    ])
+                    ->searchable(),
                 TimePicker::make('start_time')
                     ->label('Start Time')
                     ->required()
