@@ -12,97 +12,54 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $defaultImage = Image::firstOrCreate(
-            ['id' => Str::uuid()->toString()],
+        $defaultImage = Image::where('name', 'Default Avatar')->first();
+        $avatarId = $defaultImage ? $defaultImage->id : null;
+
+        // 1. Tạo 1 Admin (Nếu AdminUserSeeder chạy riêng thì bỏ qua, nhưng để đây cho chắc)
+        User::firstOrCreate(
+            ['email' => 'admin@system.com'],
             [
-                'name' => 'Default Image',
-                'image_url' => 'https://via.placeholder.com/300',
+                'id' => Str::uuid()->toString(),
+                'phone_number' => '0900000000',
+                'name' => 'System Admin',
+                'password' => Hash::make('password'),
+                'is_admin' => true,
+                'role' => 0, // 0: Admin
+                'is_active' => true,
+                'avatar_id' => $avatarId
             ]
         );
 
-        $owners = [
-            [
-                'phone_number' => '0987654321',
-                'email' => 'owner1@example.com',
-                'name' => 'John Owner',
+        // 2. Tạo 7 Owners
+        for ($i = 1; $i <= 7; $i++) {
+            User::create([
+                'id' => Str::uuid()->toString(),
+                'phone_number' => '091000000' . $i,
+                'email' => "owner{$i}@example.com",
+                'name' => "Venue Owner {$i}",
                 'password' => Hash::make('password'),
-                'gender' => false,
-                'birthday' => now()->subYears(35),
-                'role' => 0,
-                'is_admin' => 0,
+                'is_admin' => false,
+                'role' => 0, // Giả sử Owner cũng có role đặc biệt hoặc giống Admin cấp thấp
                 'is_active' => true,
-            ],
-            [
-                'phone_number' => '0987654322',
-                'email' => 'owner2@example.com',
-                'name' => 'Jane Owner',
-                'password' => Hash::make('password'),
-                'gender' => true,
-                'birthday' => now()->subYears(30),
-                'role' => 0,
-                'is_admin' => 0,
-                'is_active' => true,
-            ],
-        ];
-
-        foreach ($owners as $ownerData) {
-            User::firstOrCreate(
-                ['email' => $ownerData['email']],
-                array_merge($ownerData, [
-                    'id' => Str::uuid()->toString(),
-                    'avatar_id' => $defaultImage->id,
-                    'cover_image_id' => $defaultImage->id,
-                ])
-            );
+                'avatar_id' => $avatarId
+            ]);
         }
 
-        $customers = [
-            [
-                'phone_number' => '0123456780',
-                'email' => 'user1@example.com',
-                'name' => 'Alice User',
+        // 3. Tạo 15 Regular Users
+        for ($i = 1; $i <= 15; $i++) {
+            User::create([
+                'id' => Str::uuid()->toString(),
+                'phone_number' => '09200000' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'email' => "user{$i}@example.com",
+                'name' => "Regular User {$i}",
                 'password' => Hash::make('password'),
-                'gender' => true,
-                'birthday' => now()->subYears(25),
-                'role' => 1,
-                'is_admin' => 0,
+                'is_admin' => false,
+                'role' => 1, // 1: User thường
                 'is_active' => true,
-            ],
-            [
-                'phone_number' => '0123456781',
-                'email' => 'user2@example.com',
-                'name' => 'Bob User',
-                'password' => Hash::make('password'),
-                'gender' => false,
-                'birthday' => now()->subYears(28),
-                'role' => 1,
-                'is_admin' => 0,
-                'is_active' => true,
-            ],
-            [
-                'phone_number' => '0123456782',
-                'email' => 'user3@example.com',
-                'name' => 'Charlie User',
-                'password' => Hash::make('password'),
-                'gender' => false,
-                'birthday' => now()->subYears(22),
-                'role' => 1,
-                'is_admin' => 0,
-                'is_active' => true,
-            ],
-        ];
-
-        foreach ($customers as $userData) {
-            User::firstOrCreate(
-                ['email' => $userData['email']],
-                array_merge($userData, [
-                    'id' => Str::uuid()->toString(),
-                    'avatar_id' => $defaultImage->id,
-                    'cover_image_id' => $defaultImage->id,
-                ])
-            );
+                'avatar_id' => $avatarId
+            ]);
         }
-
-        $this->command->info('Users seeded successfully!');
+        
+        $this->command->info('Users (1 Admin, 7 Owners, 15 Users) seeded!');
     }
 }

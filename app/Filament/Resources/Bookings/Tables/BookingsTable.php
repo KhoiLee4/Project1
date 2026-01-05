@@ -22,19 +22,53 @@ class BookingsTable
                     ->sortable(),
                 TextColumn::make('date')
                     ->label('Date')
-                    ->date('d/m/Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-')
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y') : '-'),
                 TextColumn::make('start_time')
                     ->label('Start Time')
-                    ->time('H:i')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-')
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('H:i') : '-'),
                 TextColumn::make('end_time')
                     ->label('End Time')
-                    ->time('H:i')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-')
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('H:i') : '-'),
                 TextColumn::make('ground.name')
                     ->label('Ground')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-')
+                    ->default('-'),
+                TextColumn::make('event.name')
+                    ->label('Event')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-')
+                    ->default('-')
+                    ->toggleable(),
+                TextColumn::make('event.start_date')
+                    ->label('Event Start')
+                    ->sortable()
+                    ->placeholder('-')
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('event.end_date')
+                    ->label('Event End')
+                    ->sortable()
+                    ->placeholder('-')
+                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('event.price')
+                    ->label('Event Price')
+                    ->money('VND')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('event.ticket_number')
+                    ->label('Tickets')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()

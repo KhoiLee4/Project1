@@ -26,9 +26,14 @@ class ListBookings extends ListRecords
         if ($user && $user->is_admin == 0 && $user->role == 0) {
             $venueIds = \App\Models\Venue::where('owner_id', $user->id)->pluck('id')->toArray();
             $groundIds = \App\Models\Ground::whereIn('venue_id', $venueIds)->pluck('id')->toArray();
-            $query->whereIn('ground_id', $groundIds);
+            $query->where(function($q) use ($groundIds, $venueIds) {
+                $q->whereIn('ground_id', $groundIds)
+                  ->orWhereHas('event', function($subQ) use ($venueIds) {
+                      $subQ->whereIn('venue_id', $venueIds);
+                  });
+            });
         }
 
-        return $query;
+        return $query->with(['event', 'ground']);
     }
 }

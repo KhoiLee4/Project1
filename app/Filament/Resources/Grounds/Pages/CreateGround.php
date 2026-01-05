@@ -21,4 +21,9 @@ class CreateGround extends CreateRecord
                 ->color('gray'),
         ];
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

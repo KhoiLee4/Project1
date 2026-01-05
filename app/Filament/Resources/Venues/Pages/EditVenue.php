@@ -30,4 +30,9 @@ class EditVenue extends EditRecord
             abort(403, 'Bạn không có quyền chỉnh sửa venue này.');
         }
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

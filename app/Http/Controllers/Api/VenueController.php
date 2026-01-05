@@ -175,32 +175,65 @@ class VenueController extends Controller
     {
         $venue = Venue::findOrFail($venueId);
         $date = $request->get('date', now()->toDateString());
+        $categoryId = $request->get('category_id');
         
-        $bookings = \App\Models\Booking::whereHas('ground', function ($query) use ($venueId) {
+        $bookingsQuery = \App\Models\Booking::whereHas('ground', function ($query) use ($venueId) {
             $query->where('venue_id', $venueId);
         })
         ->where('date', $date)
         ->where('status', '!=', 'Cancelled')
-        ->with(['user', 'ground.category'])
-        ->get();
+        ->where('is_event', false)
+        ->with(['user', 'ground']);
         
-        $schedule = $bookings->map(function ($booking) {
-            return [
-                'id' => $booking->id,
-                'ground_id' => $booking->ground_id,
-                'ground_name' => $booking->ground->name,
-                'category_name' => $booking->ground->category->name ?? null,
-                'start_time' => $booking->start_time,
-                'end_time' => $booking->end_time,
-                'user_name' => $booking->user->name ?? null,
-                'status' => $booking->status,
-            ];
-        });
+        if ($categoryId) {
+            $bookingsQuery->whereHas('ground', function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
+            });
+        }
+        
+        $bookings = $bookingsQuery->get();
+        
+        $bookedSlots = [];
+        $lockedSlots = [];
+        $eventSlots = [];
+        
+        $timeSlots = [
+            '6:00', '6:30', '7:00', '7:30', '8:00', '8:30', '9:00', '9:30',
+            '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+            '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+            '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
+            '22:00', '22:30'
+        ];
+        
+        foreach ($bookings as $booking) {
+            if (!$booking->ground_id || !$booking->start_time || !$booking->end_time) {
+                continue;
+            }
+            
+            if ($booking->status !== 'Pending' && $booking->status !== 'Confirmed') {
+                continue;
+            }
+            
+            $groundId = $booking->ground_id;
+            $startTime = \Carbon\Carbon::parse($booking->start_time);
+            $endTime = \Carbon\Carbon::parse($booking->end_time);
+            
+            foreach ($timeSlots as $slot) {
+                $slotParts = explode(':', $slot);
+                $slotCarbon = \Carbon\Carbon::createFromTime((int)$slotParts[0], (int)$slotParts[1]);
+                $nextSlotCarbon = $slotCarbon->copy()->addMinutes(30);
+                
+                if ($slotCarbon->lt($endTime) && $nextSlotCarbon->gt($startTime)) {
+                    $slotKey = "{$groundId}-{$slot}";
+                    $bookedSlots[] = $slotKey;
+                }
+            }
+        }
         
         return response()->json([
-            'venue_id' => $venueId,
-            'date' => $date,
-            'schedule' => $schedule,
+            'booked' => array_unique($bookedSlots),
+            'locked' => $lockedSlots,
+            'events' => $eventSlots,
         ]);
     }
 

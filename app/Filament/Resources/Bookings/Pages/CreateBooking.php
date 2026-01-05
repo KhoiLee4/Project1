@@ -27,4 +27,9 @@ class CreateBooking extends CreateRecord
         unset($data['venue_id']);
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
