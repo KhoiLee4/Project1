@@ -91,4 +91,67 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
+
+    public function update(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:100',
+            'phone_number' => 'sometimes|string|max:20|unique:users,phone_number,' . $user->id,
+            'email' => 'sometimes|string|email|max:100|unique:users,email,' . $user->id,
+            'gender' => 'sometimes|boolean',
+            'birthday' => 'sometimes|date',
+            'avatar_id' => 'nullable|exists:images,id',
+            'cover_image_id' => 'nullable|exists:images,id',
+        ]);
+
+        $user->update($validated);
+        $user->load(['avatar', 'coverImage']);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|string|min:8',
+            'password_confirmation' => 'required|same:new_password',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect'
+            ], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return response()->json([
+            'message' => 'Password changed successfully'
+        ]);
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+
+        $user->update([
+            'is_active' => false
+        ]);
+
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'message' => 'Account deactivated successfully'
+        ]);
+    }
 }

@@ -48,6 +48,19 @@ class RatingController extends Controller
             ], 422);
         }
 
+        $hasCompletedBooking = \App\Models\Booking::where('user_id', $validated['user_id'])
+            ->whereHas('ground', function($query) use ($validated) {
+                $query->where('venue_id', $validated['venue_id']);
+            })
+            ->where('status', 'Completed')
+            ->exists();
+
+        if (!$hasCompletedBooking) {
+            return response()->json([
+                'message' => 'You can only rate venues where you have completed bookings.'
+            ], 403);
+        }
+
         $rating = Rating::create($validated);
         $rating->load(['user.avatar', 'venue']);
 

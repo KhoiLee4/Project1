@@ -48,6 +48,7 @@ class Venue extends Model
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'venues_categories', 'venue_id', 'category_id')
+                    ->withPivot('price_id')
                     ->withTimestamps();
     }
 
@@ -76,5 +77,16 @@ class Venue extends Model
     public function grounds()
     {
         return $this->hasMany(Ground::class, 'venue_id');
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'venue_id');
+    }
+
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'venue_id', 'user_id')
+                    ->withTimestamps();
     }
 }

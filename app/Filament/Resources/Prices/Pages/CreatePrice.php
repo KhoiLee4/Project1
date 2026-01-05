@@ -11,6 +11,9 @@ class CreatePrice extends CreateRecord
 {
     protected static string $resource = PriceResource::class;
 
+    protected ?string $venueId = null;
+    protected ?string $categoryId = null;
+
     protected function getFormActions(): array
     {
         return [
@@ -25,8 +28,9 @@ class CreatePrice extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $venueId = $data['venue_id'] ?? null;
-        $categoryId = $data['category_id'] ?? null;
+        $formState = $this->form->getRawState();
+        $this->venueId = $formState['venue_id'] ?? null;
+        $this->categoryId = $formState['category_id'] ?? null;
         
         unset($data['venue_id'], $data['category_id']);
         
@@ -35,17 +39,29 @@ class CreatePrice extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $venueId = $this->form->getState()['venue_id'] ?? null;
-        $categoryId = $this->form->getState()['category_id'] ?? null;
-        
-        if ($venueId && $categoryId) {
-            DB::table('venues_categories')->insert([
-                'venue_id' => $venueId,
-                'category_id' => $categoryId,
-                'price_id' => $this->record->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        if ($this->venueId && $this->categoryId) {
+            $exists = DB::table('venues_categories')
+                ->where('venue_id', $this->venueId)
+                ->where('category_id', $this->categoryId)
+                ->exists();
+            
+            if ($exists) {
+                DB::table('venues_categories')
+                    ->where('venue_id', $this->venueId)
+                    ->where('category_id', $this->categoryId)
+                    ->update([
+                        'price_id' => $this->record->id,
+                        'updated_at' => now(),
+                    ]);
+            } else {
+                DB::table('venues_categories')->insert([
+                    'venue_id' => $this->venueId,
+                    'category_id' => $this->categoryId,
+                    'price_id' => $this->record->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 }

@@ -180,9 +180,9 @@ class PaymentForm
                     ->dehydrated(true)
                     ->afterStateHydrated(function ($state, callable $set, $get = null, $context = null) use ($bookingId) {
                         // Force load booking with relationships when state is hydrated
-                        if ($state && ($context === 'create' || $context === null)) {
-                            $bookingIdToUse = is_string($state) || is_numeric($state) ? $state : ($bookingId ?? null);
-                            if ($bookingIdToUse) {
+                        $bookingIdToUse = $state ?? $bookingId;
+                        if ($bookingIdToUse && ($context === 'create' || $context === null)) {
+                            if (is_string($bookingIdToUse) || is_numeric($bookingIdToUse)) {
                                 // Trigger calculation when booking is set from query parameter
                                 self::calculatePaymentAmounts($bookingIdToUse, $set);
                             }

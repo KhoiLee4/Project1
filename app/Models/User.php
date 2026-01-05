@@ -88,4 +88,14 @@ class User extends Authenticatable
         return $this->hasMany(Venue::class, 'owner_id');
     }
 
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'user_id');
+    }
+
+    public function favoriteVenues()
+    {
+        return $this->belongsToMany(Venue::class, 'favorites', 'user_id', 'venue_id')
+                    ->withTimestamps();
+    }
 }

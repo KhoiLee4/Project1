@@ -44,4 +44,19 @@ class EditPayment extends EditRecord
             }
         }
     }
+
+    protected function afterSave(): void
+    {
+        if ($this->record->booking_id) {
+            $booking = \App\Models\Booking::find($this->record->booking_id);
+            if ($booking) {
+                $paymentStatus = $this->record->status;
+                if ($paymentStatus === 'Paid') {
+                    $booking->update(['status' => 'Completed']);
+                } elseif ($paymentStatus === 'Cancelled' || $paymentStatus === 'Refunded') {
+                    // Payment cancelled - booking vẫn giữ status hiện tại
+                }
+            }
+        }
+    }
 }

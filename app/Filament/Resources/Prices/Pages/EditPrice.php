@@ -79,21 +79,76 @@ class EditPrice extends EditRecord
 
     protected function afterSave(): void
     {
-        $venueId = $this->form->getState()['venue_id'] ?? null;
-        $categoryId = $this->form->getState()['category_id'] ?? null;
+        $formState = $this->form->getRawState();
+        $venueId = $formState['venue_id'] ?? null;
+        $categoryId = $formState['category_id'] ?? null;
         
         if ($venueId && $categoryId) {
-            DB::table('venues_categories')
+            $oldPivot = DB::table('venues_categories')
                 ->where('price_id', $this->record->id)
-                ->delete();
+                ->first();
             
-            DB::table('venues_categories')->insert([
-                'venue_id' => $venueId,
-                'category_id' => $categoryId,
-                'price_id' => $this->record->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if ($oldPivot) {
+                if ($oldPivot->venue_id == $venueId && $oldPivot->category_id == $categoryId) {
+                    DB::table('venues_categories')
+                        ->where('venue_id', $venueId)
+                        ->where('category_id', $categoryId)
+                        ->update([
+                            'price_id' => $this->record->id,
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    DB::table('venues_categories')
+                        ->where('price_id', $this->record->id)
+                        ->update(['price_id' => null]);
+                    
+                    $exists = DB::table('venues_categories')
+                        ->where('venue_id', $venueId)
+                        ->where('category_id', $categoryId)
+                        ->exists();
+                    
+                    if ($exists) {
+                        DB::table('venues_categories')
+                            ->where('venue_id', $venueId)
+                            ->where('category_id', $categoryId)
+                            ->update([
+                                'price_id' => $this->record->id,
+                                'updated_at' => now(),
+                            ]);
+                    } else {
+                        DB::table('venues_categories')->insert([
+                            'venue_id' => $venueId,
+                            'category_id' => $categoryId,
+                            'price_id' => $this->record->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            } else {
+                $exists = DB::table('venues_categories')
+                    ->where('venue_id', $venueId)
+                    ->where('category_id', $categoryId)
+                    ->exists();
+                
+                if ($exists) {
+                    DB::table('venues_categories')
+                        ->where('venue_id', $venueId)
+                        ->where('category_id', $categoryId)
+                        ->update([
+                            'price_id' => $this->record->id,
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    DB::table('venues_categories')->insert([
+                        'venue_id' => $venueId,
+                        'category_id' => $categoryId,
+                        'price_id' => $this->record->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
         }
     }
 }

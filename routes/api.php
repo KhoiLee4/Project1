@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\GroundController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RatingController;
@@ -22,6 +23,9 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+        Route::put('/update', [AuthController::class, 'update']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
     });
 });
 
@@ -33,6 +37,7 @@ Route::prefix('venues')->group(function () {
     Route::get('/{venueId}/price-lists', [VenueController::class, 'priceLists']);
     Route::get('/{venueId}/images', [VenueController::class, 'images']);
     Route::get('/{venueId}/schedule', [VenueController::class, 'schedule']);
+    Route::get('/{venueId}/categories/{categoryId}/price-info', [VenueController::class, 'priceInfo']);
     
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [VenueController::class, 'store']);
@@ -82,6 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [BookingController::class, 'show']);
         Route::put('/{id}', [BookingController::class, 'update']);
         Route::delete('/{id}', [BookingController::class, 'destroy']);
+        Route::post('/{id}/confirm', [BookingController::class, 'confirm']);
+        Route::post('/{id}/cancel', [BookingController::class, 'cancel']);
     });
 
     Route::prefix('payments')->group(function () {
@@ -96,6 +103,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [RatingController::class, 'store']);
         Route::put('/{id}', [RatingController::class, 'update']);
         Route::delete('/{id}', [RatingController::class, 'destroy']);
+    });
+
+    Route::prefix('favorites')->group(function () {
+        Route::get('/', [FavoriteController::class, 'index']);
+        Route::post('/', [FavoriteController::class, 'store']);
+        Route::delete('/{venueId}', [FavoriteController::class, 'destroy']);
     });
 });
 

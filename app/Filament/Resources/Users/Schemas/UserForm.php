@@ -26,7 +26,11 @@ class UserForm
                     ->email()
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->default(null)
+                    ->placeholder('Nhập email')
+                    ->autocomplete('off')
+                    ->extraAttributes(['autocomplete' => 'off']),
                 TextInput::make('name')
                     ->label('Full Name')
                     ->required()
@@ -37,7 +41,28 @@ class UserForm
                     ->revealable()
                     ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser)
                     ->dehydrated(fn ($state) => filled($state))
-                    ->minLength(8),
+                    ->minLength(8)
+                    ->default(null)
+                    ->placeholder('Nhập mật khẩu')
+                    ->autocomplete('new-password')
+                    ->extraAttributes(['autocomplete' => 'new-password'])
+                    ->visible(fn ($livewire) => 
+                        $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser || 
+                        (auth()->check() && auth()->user()->is_admin == 1)
+                    )
+                    ->default(fn ($livewire) => 
+                        $livewire instanceof \Filament\Resources\Pages\EditRecord && auth()->check() && auth()->user()->is_admin == 1
+                            ? substr($livewire->record->password ?? '', 0, 20) . '... (hashed)'
+                            : null
+                    )
+                    ->disabled(fn ($livewire) => 
+                        $livewire instanceof \Filament\Resources\Pages\EditRecord && auth()->check() && auth()->user()->is_admin == 1
+                    )
+                    ->helperText(fn ($livewire) => 
+                        $livewire instanceof \Filament\Resources\Pages\EditRecord && auth()->check() && auth()->user()->is_admin == 1
+                            ? 'Mật khẩu đã được hash. Nhập mật khẩu mới để thay đổi.'
+                            : null
+                    ),
                 Select::make('gender')
                     ->label('Gender')
                     ->options([
