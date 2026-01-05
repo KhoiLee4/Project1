@@ -107,21 +107,29 @@ class BookingForm
                     ->createOptionUsing(function (array $data) {
                         return \App\Models\User::create($data)->id;
                     }),
+                Toggle::make('is_event')
+                    ->label('Is Event (1=Event, 0=Normal)')
+                    ->default(false)
+                    ->required()
+                    ->live()
+                    ->disabled($isReadOnly),
                 DatePicker::make('date')
                     ->label('Date')
-                    ->required()
+                    ->required(fn ($get) => !$get('is_event'))
                     ->displayFormat('d/m/Y')
+                    ->visible(fn ($get) => !$get('is_event'))
                     ->disabled($isReadOnly),
                 TimePicker::make('start_time')
                     ->label('Start Time')
-                    ->required()
+                    ->required(fn ($get) => !$get('is_event'))
                     ->seconds(false)
                     ->disabled($isReadOnly)
+                    ->visible(fn ($get) => !$get('is_event'))
                     ->live(onBlur: false)
                     ->afterStateUpdated(function ($state, callable $set, $get) {
                         $startTime = $state;
                         $endTime = $get('end_time');
-                        if ($startTime && $endTime) {
+                        if ($startTime && $endTime && !$get('is_event')) {
                             try {
                                 $start = \Carbon\Carbon::parse($startTime);
                                 $end = \Carbon\Carbon::parse($endTime);
@@ -134,14 +142,15 @@ class BookingForm
                     }),
                 TimePicker::make('end_time')
                     ->label('End Time')
-                    ->required()
+                    ->required(fn ($get) => !$get('is_event'))
                     ->seconds(false)
                     ->disabled($isReadOnly)
+                    ->visible(fn ($get) => !$get('is_event'))
                     ->live(onBlur: false)
                     ->afterStateUpdated(function ($state, callable $set, $get) {
                         $startTime = $get('start_time');
                         $endTime = $state;
-                        if ($startTime && $endTime) {
+                        if ($startTime && $endTime && !$get('is_event')) {
                             try {
                                 $start = \Carbon\Carbon::parse($startTime);
                                 $end = \Carbon\Carbon::parse($endTime);
@@ -155,19 +164,17 @@ class BookingForm
                 TextInput::make('amount_time')
                     ->label('Total Hours')
                     ->numeric()
-                    ->required()
-                    ->default(1)
+                    ->default(0)
                     ->disabled()
+                    ->visible(fn ($get) => !$get('is_event'))
                     ->dehydrated(true),
-                Toggle::make('is_event')
-                    ->label('Is Event (1=Event, 0=Normal)')
-                    ->default(false)
-                    ->required()
-                    ->disabled($isReadOnly),
                 Select::make('venue_id')
                     ->label('Venue')
                     ->options(function () {
-                        $user = auth()->user();
+                        if (!\Illuminate\Support\Facades\Auth::check()) {
+                            return [];
+                        }
+                        $user = \Illuminate\Support\Facades\Auth::user();
                         if ($user && $user->is_admin == 1) {
                             return \App\Models\Venue::pluck('name', 'id')->toArray();
                         } elseif ($user && $user->is_admin == 0 && $user->role == 0) {
@@ -181,12 +188,21 @@ class BookingForm
                     ->disabled($isReadOnly)
                     ->live(onBlur: false)
                     ->dehydrated(false)
-                    ->visible(fn () => auth()->check() && (auth()->user()->is_admin == 1 || (auth()->user()->is_admin == 0 && auth()->user()->role == 0))),
+                    ->visible(function () {
+                        if (!\Illuminate\Support\Facades\Auth::check()) {
+                            return false;
+                        }
+                        $user = \Illuminate\Support\Facades\Auth::user();
+                        return ($user->is_admin == 1) || ($user->is_admin == 0 && $user->role == 0);
+                    }),
                 Select::make('ground_id')
                     ->label('Ground')
                     ->options(function ($get) {
                         $venueId = $get('venue_id');
-                        $user = auth()->user();
+                        if (!\Illuminate\Support\Facades\Auth::check()) {
+                            return [];
+                        }
+                        $user = \Illuminate\Support\Facades\Auth::user();
                         
                         if ($venueId) {
                             return \App\Models\Ground::where('venue_id', $venueId)->pluck('name', 'id')->toArray();
@@ -203,7 +219,8 @@ class BookingForm
                     })
                     ->searchable()
                     ->preload()
-                    ->required()
+                    ->required(fn ($get) => !$get('is_event'))
+                    ->visible(fn ($get) => !$get('is_event'))
                     ->disabled($isReadOnly)
                     ->live(onBlur: false),
                 Select::make('target')
@@ -227,8 +244,14 @@ class BookingForm
                 TextInput::make('quantity')
                     ->label('Quantity (People/Tickets)')
                     ->numeric()
-                    ->default(30)
+                    ->default(fn ($get) => $get('is_event') ? 1 : 30)
                     ->required()
+                    ->disabled($isReadOnly),
+                TextInput::make('total_price')
+                    ->label('Total Price')
+                    ->numeric()
+                    ->default(0)
+                    ->prefix('₫')
                     ->disabled($isReadOnly),
                 Select::make('status')
                     ->label('Status')
@@ -243,10 +266,33 @@ class BookingForm
                     ->disabled($isReadOnly),
                 Select::make('event_id')
                     ->label('Event')
-                    ->relationship('event', 'name')
+                    ->options(function ($get) {
+                        $venueId = $get('venue_id');
+                        if (!$venueId) {
+                            // Try to get venue_id from ground if available
+                            $groundId = $get('ground_id');
+                            if ($groundId) {
+                                $ground = \App\Models\Ground::find($groundId);
+                                if ($ground) {
+                                    $venueId = $ground->venue_id;
+                                }
+                            }
+                        }
+                        
+                        if ($venueId) {
+                            return \App\Models\Event::where('venue_id', $venueId)
+                                ->pluck('name', 'id')
+                                ->toArray();
+                        }
+                        
+                        return [];
+                    })
+                    ->searchable()
                     ->preload()
                     ->visible(fn ($get) => $get('is_event'))
-                    ->disabled($isReadOnly),
+                    ->required(fn ($get) => $get('is_event'))
+                    ->disabled($isReadOnly)
+                    ->live(),
             ]);
     }
 }

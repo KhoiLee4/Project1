@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Events\Schemas;
 
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -12,6 +14,12 @@ class EventForm
     {
         return $schema
             ->components([
+                Select::make('venue_id')
+                    ->label('Venue')
+                    ->relationship('venue', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 TextInput::make('name')
                     ->label('Event Name')
                     ->required()
@@ -32,6 +40,15 @@ class EventForm
                     ->label('Level')
                     ->rows(2)
                     ->maxLength(255),
+                DateTimePicker::make('start_date')
+                    ->label('Start Date & Time')
+                    ->displayFormat('d/m/Y H:i')
+                    ->seconds(false),
+                DateTimePicker::make('end_date')
+                    ->label('End Date & Time')
+                    ->displayFormat('d/m/Y H:i')
+                    ->seconds(false)
+                    ->after('start_date'),
             ]);
     }
 }

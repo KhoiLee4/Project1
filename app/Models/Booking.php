@@ -25,6 +25,7 @@ class Booking extends Model
         'quantity',
         'status',
         'event_id',
+        'total_price',
     ];
 
     protected function casts(): array
@@ -35,6 +36,7 @@ class Booking extends Model
             'amount_time' => 'integer',
             'is_event' => 'boolean',
             'quantity' => 'integer',
+            'total_price' => 'decimal:2',
         ];
     }
 
