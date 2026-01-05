@@ -16,6 +16,9 @@ class Event extends Model
         'price',
         'ticket_number',
         'level',
+        'venue_id',
+        'start_date',
+        'end_date',
     ];
 
     protected function casts(): array
@@ -24,11 +27,18 @@ class Event extends Model
             'id' => 'string',
             'price' => 'decimal:2',
             'ticket_number' => 'integer',
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
         ];
     }
 
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'event_id');
+    }
+
+    public function venue()
+    {
+        return $this->belongsTo(Venue::class, 'venue_id');
     }
 }

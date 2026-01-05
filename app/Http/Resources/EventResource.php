@@ -15,6 +15,11 @@ class EventResource extends JsonResource
             'price' => $this->price,
             'ticket_number' => $this->ticket_number,
             'level' => $this->level,
+            'venue_id' => $this->venue_id,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

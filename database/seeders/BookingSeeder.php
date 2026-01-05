@@ -31,6 +31,8 @@ class BookingSeeder extends Seeder
             $date = now()->addDays(rand(1, 30));
             $startHour = rand(6, 18);
             $endHour = $startHour + rand(1, 3);
+            $amountTime = $endHour - $startHour;
+            $totalPrice = $amountTime * rand(100000, 200000); // Giả sử giá mỗi giờ
 
             Booking::create([
                 'id' => Str::uuid()->toString(),
@@ -38,35 +40,39 @@ class BookingSeeder extends Seeder
                 'date' => $date,
                 'start_time' => sprintf('%02d:00:00', $startHour),
                 'end_time' => sprintf('%02d:00:00', $endHour),
-                'amount_time' => $endHour - $startHour,
+                'amount_time' => $amountTime,
                 'is_event' => false,
                 'ground_id' => $ground->id,
-                'target' => rand(0, 1) ? 'Students' : null,
+                'target' => rand(0, 1) ? 'student' : 'adult',
                 'customer_note' => rand(0, 1) ? 'Please prepare the equipment' : null,
                 'quantity' => rand(10, 30),
+                'total_price' => $totalPrice,
                 'status' => $statuses[array_rand($statuses)],
             ]);
         }
 
         // Create event bookings
         if ($events->isNotEmpty()) {
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 10; $i++) {
                 $user = $users->random();
-                $ground = $grounds->random();
                 $event = $events->random();
-                $date = now()->addDays(rand(1, 30));
+                $quantity = rand(1, 5);
+                $totalPrice = $event->price * $quantity; // Tổng giá = giá vé * số lượng vé
 
                 Booking::create([
                     'id' => Str::uuid()->toString(),
                     'user_id' => $user->id,
-                    'date' => $date,
-                    'start_time' => '18:00:00',
-                    'end_time' => '22:00:00',
-                    'amount_time' => 4,
+                    'date' => null, // Event booking không cần date
+                    'start_time' => null, // Event booking không cần start_time
+                    'end_time' => null, // Event booking không cần end_time
+                    'amount_time' => null, // Event booking không cần amount_time
                     'is_event' => true,
-                    'ground_id' => $ground->id,
+                    'ground_id' => null, // Event booking không cần ground_id
                     'event_id' => $event->id,
-                    'quantity' => rand(1, 5),
+                    'quantity' => $quantity,
+                    'total_price' => $totalPrice,
+                    'target' => null,
+                    'customer_note' => rand(0, 1) ? 'Looking forward to the event!' : null,
                     'status' => $statuses[array_rand($statuses)],
                 ]);
             }

@@ -14,6 +14,10 @@ class EventsTable
     {
         return $table
             ->columns([
+                TextColumn::make('venue.name')
+                    ->label('Venue')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('name')
                     ->label('Event Name')
                     ->searchable()
